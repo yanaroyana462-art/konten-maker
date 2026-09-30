@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Creator Studio & Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#094e77',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        /* Focus Editor Styles */
+        .editor-content:focus { outline: none; }
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            cursor: text;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 flex items-center justify-between z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+                <i class="fa-solid font-bold fa-pen-nib text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-900 dark:text-white leading-tight text-base sm:text-lg">Content Maker <span class="text-sky-500 font-normal">Studio</span></h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Editor & Assistant Konten Kreatif</p>
+            </div>
+        </div>
+
+        <!-- Quick Top Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Ubah Tema">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+            <button onclick="toggleSidebar()" class="lg:hidden p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <i class="fa-solid fa-sliders"></i>
+            </button>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+            <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Buka Portal Publikasi">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span class="hidden sm:inline">Lihat Portal</span>
+            </a>
+            <button id="btnPublish" onclick="publishToPortal()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition" title="Publikasikan Artikel ke Portal Utama">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Publikasikan</span>
+            </button>
+            <button onclick="copyContent('text')" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Salin Teks Polos">
+                <i class="fa-regular fa-copy"></i>
+                <span class="hidden sm:inline">Salin Teks</span>
+            </button>
+            <button onclick="copyContent('html')" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Salin sebagai Dokumen HTML Lengkap">
+                <i class="fa-solid fa-code"></i>
+                <span class="hidden sm:inline">Salin HTML</span>
+            </button>
+
+            <!-- Export Dropdown Menu -->
+            <div class="relative inline-block text-left" id="exportDropdownContainer">
+                <button id="exportDropdownBtn" onclick="toggleExportDropdown(event)" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-sky-600 text-white rounded-lg hover:bg-sky-700 shadow-sm transition" title="Pilihan Format Export">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Export</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+                </button>
+                <div id="exportDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl py-1.5 z-50 text-xs text-slate-700 dark:text-slate-200">
+                    <button type="button" onclick="exportDoc('html'); toggleExportDropdown();" class="w-full text-left px-3.5 py-2 flex items-center gap-2.5 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition">
+                        <i class="fa-brands fa-html5 text-orange-500 text-sm w-4 text-center"></i>
+                        <div>
+                            <span class="font-medium block">HTML (.html)</span>
+                            <span class="text-[10px] text-slate-400">Halaman web mandiri</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="exportDoc('markdown'); toggleExportDropdown();" class="w-full text-left px-3.5 py-2 flex items-center gap-2.5 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition">
+                        <i class="fa-brands fa-markdown text-sky-500 text-sm w-4 text-center"></i>
+                        <div>
+                            <span class="font-medium block">Markdown (.md)</span>
+                            <span class="text-[10px] text-slate-400">Format dokumentasi</span>
+                        </div>
+                    </button>
+                    <button type="button" onclick="exportDoc('txt'); toggleExportDropdown();" class="w-full text-left px-3.5 py-2 flex items-center gap-2.5 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition">
+                        <i class="fa-regular fa-file-lines text-slate-400 text-sm w-4 text-center"></i>
+                        <div>
+                            <span class="font-medium block">Plain Text (.txt)</span>
+                            <span class="text-[10px] text-slate-400">Teks polos tanpa tag</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Sidebar: Parameters & Generator Form -->
+        <aside id="sidebar" class="w-full lg:w-96 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col absolute lg:relative inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none">
+            
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                <div class="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-semibold">
+                    <i class="fa-solid fa-wand-magic-sparkles text-sky-500"></i>
+                    <span>Parameter Generator</span>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form Options (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+                <!-- 1. Kategori Konten -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Kategori Konten</label>
+                    <select id="paramCategory" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                        <option value="khutbah">🕌 Khutbah / Tausiyah</option>
+                        <option value="artikel" selected>📰 Artikel / Blog Post</option>
+                        <option value="sosmed">📲 Post Media Sosial (IG/LinkedIn/X)</option>
+                        <option value="script">🎙️ Script Video / Podcast</option>
+                        <option value="newsletter">✉️ Newsletter Email</option>
+                        <option value="buletin">📄 Buletin / Press Release</option>
+                    </select>
+                </div>
+
+                <!-- 2. Target Panjang Teks -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Panjang Teks</label>
+                        <span id="lengthLabel" class="text-xs font-semibold text-sky-600 dark:text-sky-400">500 kata</span>
+                    </div>
+                    <input type="range" id="paramLength" min="200" max="2000" step="100" value="500" oninput="updateLengthLabel(this.value)" class="w-full accent-sky-600 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span>Ringkas (200)</span>
+                        <span>Sedang (500)</span>
+                        <span>Mendalam (2000+)</span>
+                    </div>
+                </div>
+
+                <!-- 3. Tone / Gaya Bahasa -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tone / Gaya Bahasa</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="santai" class="peer hidden" checked>
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">😊 Santai & Akrab</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="formal" class="peer hidden">
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">👔 Formal</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="profesional" class="peer hidden">
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">💼 Profesional</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="persuasif" class="peer hidden">
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">🚀 Persuasif</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="inspiratif" class="peer hidden">
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">🌟 Inspiratif</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="paramTone" value="akademis" class="peer hidden">
+                            <span class="block text-center text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 peer-checked:bg-sky-50 dark:peer-checked:bg-sky-950/50 peer-checked:border-sky-500 peer-checked:text-sky-600 font-medium transition">🎓 Akademis</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. Target Segmen/Audience -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Target Audiens</label>
+                    <select id="paramAudience" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                        <option value="remaja">🔥 Remaja & Gen Z</option>
+                        <option value="mahasiswa">🎓 Mahasiswa & Pelajar</option>
+                        <option value="umum" selected>🌍 Masyarakat Umum</option>
+                        <option value="pekerja">👨‍💼 Profesional & Pekerja</option>
+                        <option value="orangtua">👨‍👩‍👧 Orang Tua & Keluarga</option>
+                    </select>
+                </div>
+
+                <!-- Upload Buku / Dokumen Sumber PDF -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Buku / Dokumen Sumber</label>
+                        <span id="bookCountBadge" class="text-[11px] font-mono text-sky-600 dark:text-sky-400">0 file</span>
+                    </div>
+                    
+                    <!-- Upload Area -->
+                    <label for="bookUploadInput" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 dark:hover:border-sky-400 rounded-xl p-3.5 text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 bg-slate-50/60 dark:bg-slate-900/40 hover:bg-sky-50/40 dark:hover:bg-sky-950/20 transition group">
+                        <input type="file" id="bookUploadInput" accept=".pdf,.epub,.txt,.docx" multiple onchange="handleBookUpload(event)" class="hidden">
+                        <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-950 flex items-center justify-center text-sky-600 dark:text-sky-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Klik untuk Upload PDF / Buku</span>
+                            <span class="text-[10px] text-slate-400">Format: PDF, EPUB, TXT, DOCX (Maks 25MB)</span>
+                        </div>
+                    </label>
+
+                    <!-- List Buku Sumber Terupload -->
+                    <div class="mt-2.5 space-y-1.5" id="uploadedBooksList">
+                        <!-- Item buku akan dirender di sini via JS -->
+                    </div>
+                </div>
+
+                <!-- 5. Referensi & Ayat / Kutipan -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Referensi / Kutipan Utama</label>
+                    <textarea id="paramReference" rows="2" placeholder="Masukkan topik, ayat, quote, atau poin penting acuan..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition resize-none"></textarea>
+                </div>
+
+                <!-- 6. Kata Kunci / SEO Keywords -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Kata Kunci (SEO)</label>
+                    <input type="text" id="paramKeywords" placeholder="Contoh: produktivitas, self-improvement, islam" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                </div>
+
+                <!-- Konfigurasi AI API Key untuk RAG -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Gemini API Key (Opsional)</label>
+                    <input type="password" id="geminiApiKey" placeholder="Otomatis dari Vercel / isi jika ingin override..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition font-mono">
+                    <span class="text-[10px] text-slate-400">Jika kosong, sistem otomatis memakai GEMINI_API_KEY yang tersimpan di Vercel.</span>
+                </div>
+
+                <!-- 7. CTA & Bahasa -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Bahasa</label>
+                        <select id="paramLanguage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                            <option value="id" selected>🇮🇩 Indonesia</option>
+                            <option value="en">🇬🇧 Inggris</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Include CTA</label>
+                        <select id="paramCTA" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                            <option value="yes" selected>Ya (Panggilan Aksi)</option>
+                            <option value="no">Tidak Perlu</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar Actions Footer -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex gap-2">
+                <button onclick="resetParameters()" class="p-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition" title="Reset Parameter">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button onclick="generateDraft()" id="btnGenerate" class="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium text-sm py-2.5 px-4 rounded-lg shadow-md shadow-sky-500/20 flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Generate Draft</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Overlay backdrop for mobile sidebar -->
+        <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
+
+        <!-- Right Main Canvas / Editor Area -->
+        <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 overflow-hidden relative">
+
+            <!-- Title & Editor Toolbar -->
+            <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-3 sm:px-6 flex flex-col gap-3 shrink-0">
+                
+                <!-- Document Title Editable -->
+                <div class="flex items-center justify-between gap-4">
+                    <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
+                    
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="quickInsertCTA()" class="text-xs px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-md hover:bg-sky-100 border border-sky-200 dark:border-sky-800 font-medium transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-[10px]"></i> Sisip CTA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rich Text Formatting Toolbar -->
+                <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-slate-600 dark:text-slate-300">
+                    <div class="flex items-center gap-0.5 sm:gap-1 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
+                        <button onclick="execCmd('bold')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Tebal (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+                        <button onclick="execCmd('italic')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Miring (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+                        <button onclick="execCmd('underline')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Garis Bawah (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+                        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
+                        <button onclick="execCmd('formatBlock', '<h2>')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded px-2 h-7 font-bold text-xs">H1</button>
+                        <button onclick="execCmd('formatBlock', '<h3>')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded px-2 h-7 font-semibold text-xs">H2</button>
+                        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
+                        <button onclick="execCmd('insertUnorderedList')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="List Peluru"><i class="fa-solid fa-list-ul"></i></button>
+                        <button onclick="execCmd('insertOrderedList')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="List Angka"><i class="fa-solid fa-list-ol"></i></button>
+                        <button onclick="execCmd('formatBlock', '<blockquote>')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Kutipan"><i class="fa-solid fa-quote-left"></i></button>
+                        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
+                        <button onclick="clearEditor()" class="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-500 rounded w-7 h-7 flex items-center justify-center" title="Kosongkan Editor"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+
+                    <!-- Statistics Bar -->
+                    <div class="flex items-center gap-4 text-xs font-mono text-slate-500 dark:text-slate-400 shrink-0">
+                        <span title="Jumlah Kata"><i class="fa-regular fa-file-lines mr-1"></i><span id="wordCount">0</span> kata</span>
+                        <span title="Estimasi Waktu Baca"><i class="fa-regular fa-clock mr-1"></i><span id="readTime">0</span> mnt</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Interactive Editor Workspace -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
+                <div class="w-full max-w-3xl min-h-full">
+                    <div id="editor" contenteditable="true" data-placeholder="Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'..." oninput="updateStats()" class="editor-content outline-none text-slate-800 dark:text-slate-100 leading-relaxed text-base sm:text-lg min-h-[500px] p-2 space-y-4"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Notification Toast System -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg" class="text-sm font-medium">Pesan notifikasi</span>
+    </div>
+
+    <script>
+        // --- Supabase Config ---
+        const SUPABASE_URL = 'https://rpsrkytnwlvopyjregb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_I9AFkQbjLJp_zjFKEOhjZg_xySjYzZt';
+        const supabaseClient = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        // --- State & DOM References ---
+        let editingArticleId = null;
+        const editor = document.getElementById('editor');
+        const wordCountEl = document.getElementById('wordCount');
+        const readTimeEl = document.getElementById('readTime');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        // Setup PDF.js worker
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        // --- Uploaded Books State ---
+        let uploadedBooks = JSON.parse(localStorage.getItem('creator_books') || '[]');
+        if (uploadedBooks.length === 0) {
+            uploadedBooks = [
+                { id: 1, name: "Kumpulan-Kajian-Tematik.pdf", size: "2.4 MB", date: "Hari ini", selected: true, extractedText: "Konsistensi dalam kebaikan adalah kunci keberkahan hidup." },
+                { id: 2, name: "Panduan-Produktivitas-Modern.pdf", size: "1.8 MB", date: "Kemarin", selected: false, extractedText: "Fokus pada satu tugas utama menghasilkan lompatan produktivitas terbesar." }
+            ];
+        }
+
+        // Initial setup
+        window.onload = async function() {
+            updateStats();
+            renderUploadedBooks();
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) document.getElementById('geminiApiKey').value = savedKey;
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('id');
+            if (editId) {
+                await loadArticleForEditing(editId);
+            }
+        };
+
+        // --- Dark Mode Toggle ---
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // --- Mobile Sidebar Toggle ---
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarBackdrop.classList.toggle('hidden');
+        }
+
+        // --- Format Controls ---
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            editor.focus();
+        }
+
+        function updateLengthLabel(val) {
+            document.getElementById('lengthLabel').innerText = `${val} kata`;
+        }
+
+        // --- Statistics Counter ---
+        function updateStats() {
+            const text = editor.innerText.trim();
+            const words = text ? text.split(/\s+/).filter(word => word.length > 0).length : 0;
+            const readTime = Math.ceil(words / 200); // Rata-rata 200 kata per menit
+
+            wordCountEl.innerText = words;
+            readTimeEl.innerText = words > 0 ? readTime : 0;
+        }
+
+        // --- Safe Storage Handler ---
+        function saveBooksToStorage() {
+            try {
+                localStorage.setItem('creator_books', JSON.stringify(uploadedBooks));
+            } catch (e) {
+                console.warn('Storage quota exceeded, caching truncated text', e);
+                const fallback = uploadedBooks.map(b => ({ ...b, extractedText: b.extractedText ? b.extractedText.slice(0, 1000) : '' }));
+                try {
+                    localStorage.setItem('creator_books', JSON.stringify(fallback));
+                } catch (err) {}
+            }
+        }
+
+        // --- PDF Text Extraction via PDF.js ---
+        async function extractTextFromPDF(file) {
+            if (!window.pdfjsLib) return '';
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            const maxPages = Math.min(pdf.numPages, 10); // Ekstrak hingga 10 halaman pertama
+            for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+            }
+            return fullText.trim();
+        }
+
+        // --- RAG Helpers: Chunking & Retrieval ---
+        function splitIntoChunks(text, chunkSize = 300, overlap = 50) {
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const chunks = [];
+            for (let i = 0; i < words.length; i += (chunkSize - overlap)) {
+                const chunk = words.slice(i, i + chunkSize).join(' ');
+                if (chunk.trim()) chunks.push(chunk);
+            }
+            return chunks;
+        }
+
+        function retrieveRelevantChunks(query, books, topK = 3) {
+            if (!query.trim() || books.length === 0) return [];
+            const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+            const scoredChunks = [];
+
+            books.forEach(book => {
+                if (!book.extractedText) return;
+                const chunks = splitIntoChunks(book.extractedText);
+                chunks.forEach(chunk => {
+                    const lowerChunk = chunk.toLowerCase();
+                    let score = 0;
+                    terms.forEach(term => {
+                        if (lowerChunk.includes(term)) score += 1;
+                    });
+                    if (score > 0) {
+                        scoredChunks.push({ score, chunk, bookName: book.name });
+                    }
+                });
+            });
+
+            scoredChunks.sort((a, b) => b.score - a.score);
+            // Kembalikan chunk teratas atau potongan buku pertama jika tidak ada keyword match
+            return scoredChunks.slice(0, topK);
+        }
+
+        // --- Book Upload & Management ---
+        async function handleBookUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0 || !supabaseClient) return;
+
+            showToast('Mengekstrak teks dokumen...', 'fa-spinner fa-spin');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formattedSize = file.size > 1024 * 1024 
+                    ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
+                    : Math.round(file.size / 1024) + ' KB';
+                
+                // 1. Ekstrak teks seperti biasa
+                let extractedText = '';
+                try {
+                    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                        extractedText = await extractTextFromPDF(file);
+                    } else if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+                        extractedText = await file.text();
+                    }
+                } catch (err) {
+                    console.error('Gagal mengekstrak teks:', file.name, err);
+                }
+
+                // 2. Upload file ke Supabase Storage
+                const filePath = `public/${Date.now()}-${file.name}`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('documents') // Nama bucket Anda
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    console.error('Gagal upload ke Supabase Storage:', uploadError);
+                    showToast(`Gagal mengunggah ${file.name}`, 'fa-triangle-exclamation');
+                    continue; // Lanjut ke file berikutnya jika gagal
+                }
+
+                // 3. Simpan metadata ke tabel 'documents' di database
+                const { error: dbError } = await supabaseClient.from('documents').insert({
+                    file_name: file.name,
+                    storage_path: filePath,
+                    file_size: file.size,
+                    content_text: extractedText ? extractedText.slice(0, 25000) : '' // Simpan teks hasil ekstraksi
+                });
+
+                if (dbError) {
+                    console.error('Gagal simpan ke database Supabase:', dbError);
+                    showToast(`Gagal menyimpan metadata ${file.name}`, 'fa-triangle-exclamation');
+                    continue;
+                }
+
+                // (Opsional) Jika masih ingin menggunakan state lokal untuk tampilan UI sementara
+                // uploadedBooks.unshift({ ... });
+            }
+
+            // Muat ulang daftar buku dari database untuk memastikan sinkron
+            await loadBooksFromSupabase();
+            showToast(`${files.length} file berhasil diunggah ke Supabase!`);
+            event.target.value = '';
+        }
+
+        function toggleSelectBook(id) {
+            const book = uploadedBooks.find(b => b.id === id);
+            if (book) {
+                book.selected = !book.selected;
+                saveBooksToStorage();
+                renderUploadedBooks();
+            }
+        }
+
+        function removeBook(id, event) {
+            if (event) event.stopPropagation();
+            uploadedBooks = uploadedBooks.filter(b => b.id !== id);
+            saveBooksToStorage();
+            renderUploadedBooks();
+            showToast('Buku sumber telah dihapus', 'fa-trash-can');
+        }
+
+        function insertBookTextToRef(id) {
+            const book = uploadedBooks.find(b => b.id === id);
+            if (!book || !book.extractedText) return;
+            const refInput = document.getElementById('paramReference');
+            const snippet = book.extractedText.replace(/\s+/g, ' ').slice(0, 250) + '...';
+            refInput.value = (refInput.value ? refInput.value + '\n\n' : '') + `[Kutipan ${book.name}]: "${snippet}"`;
+            showToast('Kutipan disisipkan ke Referensi!');
+        }
+
+        function renderUploadedBooks() {
+            const listEl = document.getElementById('uploadedBooksList');
+            const badgeEl = document.getElementById('bookCountBadge');
+            if (!listEl) return;
+
+            badgeEl.innerText = `${uploadedBooks.length} file`;
+
+            if (uploadedBooks.length === 0) {
+                listEl.innerHTML = `<p class="text-[11px] text-slate-400 text-center py-2 italic">Belum ada buku sumber diunggah.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = uploadedBooks.map(book => `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border ${book.selected ? 'border-sky-300 dark:border-sky-800 bg-sky-50/40 dark:bg-sky-950/20' : 'border-slate-200 dark:border-slate-800'} text-xs transition">
+                    <div class="flex items-center gap-2 min-w-0 pr-1">
+                        <i class="fa-solid fa-file-pdf text-rose-500 shrink-0 text-sm"></i>
+                        <div class="truncate">
+                            <p class="font-medium text-slate-800 dark:text-slate-200 truncate ${book.selected ? 'text-sky-700 dark:text-sky-300 font-semibold' : ''}" title="${book.name}">${book.name}</p>
+                            <span class="text-[10px] text-slate-400 font-mono">${book.size} • ${book.date} ${book.extractedText ? '• <span class="text-emerald-500 font-medium">Teks Siap</span>' : ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        ${book.extractedText ? `
+                        <button type="button" onclick="insertBookTextToRef(${book.id})" class="p-1 text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 rounded transition" title="Sisipkan cuplikan ke Referensi">
+                            <i class="fa-solid fa-arrow-turn-down text-[11px]"></i>
+                        </button>` : ''}
+                        <button type="button" onclick="toggleSelectBook(${book.id})" class="p-1 rounded text-xs transition ${book.selected ? 'text-sky-600 dark:text-sky-400' : 'text-slate-300 hover:text-slate-500'}" title="${book.selected ? 'Aktif digunakan' : 'Jadikan rujukan'}">
+                            <i class="${book.selected ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'}"></i>
+                        </button>
+                        <button type="button" onclick="removeBook(${book.id}, event)" class="p-1 text-slate-300 hover:text-rose-500 rounded transition" title="Hapus rujukan">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- Load Article for Editing ---
+        async function loadArticleForEditing(id) {
+            editingArticleId = id;
+            const btnPublish = document.getElementById('btnPublish');
+            if (btnPublish) {
+                btnPublish.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>Perbarui</span>`;
+                btnPublish.title = "Simpan pembaruan ke Supabase";
+            }
+
+            let article = null;
+            if (supabaseClient) {
+                showToast('Mengambil data artikel...', 'fa-spinner fa-spin');
+                try {
+                    const { data, error } = await supabaseClient.from('articles').select('*').eq('id', id).single();
+                    if (!error && data) article = data;
+                } catch (err) {
+                    console.warn('Gagal memuat artikel dari Supabase:', err);
+                }
+            }
+
+            if (!article) {
+                const localArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+                article = localArticles.find(a => String(a.id) === String(id));
+            }
+
+            if (article) {
+                document.getElementById('docTitle').value = article.title || '';
+                editor.innerHTML = article.content || '';
+                if (article.category) {
+                    const catSelect = document.getElementById('paramCategory');
+                    if (catSelect) catSelect.value = article.category;
+                }
+                if (article.tone) {
+                    const toneRadio = document.querySelector(`input[name="paramTone"][value="${article.tone}"]`);
+                    if (toneRadio) toneRadio.checked = true;
+                }
+                updateStats();
+                showToast('Mode Edit: Silakan perbarui konten Anda.', 'fa-pen-to-square');
+            } else {
+                showToast('Artikel tidak ditemukan!', 'fa-triangle-exclamation');
+                editingArticleId = null;
+            }
+        }
+
+        // --- Clear Editor ---
+        function clearEditor() {
+            if (editor.innerText.trim().length > 0) {
+                if (confirm('Apakah Anda yakin ingin mengosongkan editor?')) {
+                    editor.innerHTML = '';
+                    updateStats();
+                    showToast('Editor telah dikosongkan', 'fa-trash-can');
+                }
+            }
+        }
+
+        // --- Toast Notification ---
+        function showToast(msg, icon = 'fa-circle-check') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = msg;
+            toastIcon.className = `fa-solid ${icon} text-emerald-400 dark:text-emerald-600`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- Wrap In Full Standalone HTML ---
+        function getFullHTMLDocument(title, innerHTML) {
+            return `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased py-10 px-4 sm:px-8">
+    <main class="max-w-3xl mx-auto bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200">
+        <article class="article-content space-y-4">
+${innerHTML.trim()}
+        </article>
+    </main>
+</body>
+</html>`;
+        }
+
+        // --- Copy to Clipboard ---
+        function copyContent(mode = 'text') {
+            const title = document.getElementById('docTitle').value || 'Draft Konten';
+            let contentToCopy = '';
+
+            if (mode === 'html') {
+                contentToCopy = getFullHTMLDocument(title, editor.innerHTML);
+            } else {
+                contentToCopy = editor.innerText;
+            }
+
+            if (!contentToCopy.trim()) {
+                showToast('Tidak ada teks untuk disalin!', 'fa-triangle-exclamation');
+                return;
+            }
+
+            navigator.clipboard.writeText(contentToCopy).then(() => {
+                showToast(mode === 'html' ? 'HTML lengkap disalin ke clipboard!' : 'Konten teks berhasil disalin!');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = contentToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast(mode === 'html' ? 'HTML lengkap disalin ke clipboard!' : 'Konten teks berhasil disalin!');
+            });
+        }
+
+        // --- Quick CTA Insert ---
+        function quickInsertCTA() {
+            const ctaHTML = `<p></p><blockquote class="p-3 my-2 border-l-4 border-sky-500 bg-sky-50 dark:bg-sky-950/30 text-sky-900 dark:text-sky-200 rounded-r-lg font-medium"><strong>🚀 Poin Penting:</strong> Jangan lupa tinggalkan pendapat Anda di kolom komentar dan bagikan artikel ini jika bermanfaat!</blockquote><p></p>`;
+            editor.innerHTML += ctaHTML;
+            updateStats();
+            showToast('CTA berhasil disisipkan');
+        }
+
+        // --- Reset Sidebar Parameters ---
+        function resetParameters() {
+            document.getElementById('paramCategory').value = 'artikel';
+            document.getElementById('paramLength').value = 500;
+            updateLengthLabel(500);
+            document.querySelector('input[name="paramTone"][value="santai"]').checked = true;
+            document.getElementById('paramAudience').value = 'umum';
+            document.getElementById('paramReference').value = '';
+            document.getElementById('paramKeywords').value = '';
+            document.getElementById('paramLanguage').value = 'id';
+            document.getElementById('paramCTA').value = 'yes';
+            showToast('Parameter dikembalikan ke default');
+        }
+
+        // --- Smart Content Generator Simulation ---
+        async function generateDraft() {
+            const btn = document.getElementById('btnGenerate');
+            const category = document.getElementById('paramCategory').value;
+            const length = document.getElementById('paramLength').value;
+            const tone = document.querySelector('input[name="paramTone"]:checked').value;
+            const audience = document.getElementById('paramAudience').value;
+            const ref = document.getElementById('paramReference').value || 'Pentingnya Konsistensi dan Pembelajaran Berkelanjutan';
+            const keywords = document.getElementById('paramKeywords').value;
+            const language = document.getElementById('paramLanguage').value;
+            const cta = document.getElementById('paramCTA').value;
+            const apiKey = document.getElementById('geminiApiKey').value.trim();
+            if (apiKey) {
+                localStorage.setItem('gemini_api_key', apiKey);
+            }
+
+            // Ambil rujukan buku sumber yang aktif & kutipan teksnya
+            const activeBooks = uploadedBooks.filter(b => b.selected);
+            let bookExcerpt = '';
+            const bookWithText = activeBooks.find(b => b.extractedText);
+            if (bookWithText) {
+                const cleanText = bookWithText.extractedText.replace(/\s+/g, ' ').trim();
+                bookExcerpt = cleanText.length > 180 ? cleanText.slice(0, 180) + '...' : cleanText;
+            }
+
+            // Jalankan RAG Retrieval: ambil chunk yang paling cocok dengan topik
+            const searchQuery = `${ref} ${keywords} ${category}`;
+            const retrieved = retrieveRelevantChunks(searchQuery, activeBooks, 3);
+            const contextText = retrieved.length > 0 
+                ? retrieved.map((r, i) => `[Sumber ${i+1}: ${r.bookName}]\n${r.chunk}`).join('\n\n')
+                : (bookExcerpt ? `[Sumber: ${activeBooks[0]?.name}]\n${bookExcerpt}` : '');
+
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menganalisis RAG...</span>`;
+            btn.disabled = true;
+
+            const bookReferenceNote = activeBooks.length > 0 
+                ? `<p class="text-xs text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/60 p-2.5 rounded-lg border border-sky-100 dark:border-sky-900/50 mb-3"><strong>📚 Rujukan Dokumen:</strong> ${activeBooks.map(b => b.name).join(', ')}${bookExcerpt ? `<br/><span class="italic text-slate-600 dark:text-slate-300 mt-1 block">"${bookExcerpt}"</span>` : ''}</p>` 
+                : '';
+
+            // Show loading animation on button
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Memproses...</span>`;
+            btn.disabled = true;
+
+            // Gunakan Gemini AI (melalui Serverless Function Vercel atau direct API key jika diinput manual)
+            if (contextText) {
+                try {
+                    const prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${language === 'id' ? 'Indonesia' : 'Inggris'} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
+
+ATURAN KETAT RAG:
+1. Anda WAJIB mengambil argumen, fakta, dan gagasan utama HANYA dari [KONTEKS BUKU] di bawah ini.
+2. Jangan membuat asumsi di luar konteks yang diberikan.
+3. Sisipkan sitasi rujukan buku di dalam isi tulisan.
+
+[KONTEKS BUKU]:
+${contextText}
+
+TOPIK TAMBAHAN: ${ref}
+KATA KUNCI: ${keywords}
+Format output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, tanpa markdown \`\`\`html).`;
+
+                    let response;
+                    if (apiKey) {
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+                    } else {
+                        response = await fetch('/api/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt })
+                        });
+                    }
+
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                        let resultHTML = data.candidates[0].content.parts[0].text;
+                        resultHTML = resultHTML.replace(/```html|```/g, '').trim();
+                        editor.innerHTML = `<article class="article-content space-y-4">${bookReferenceNote}${resultHTML}</article>`;
+                        updateStats();
+                        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Draft</span>`;
+                        btn.disabled = false;
+                        showToast('Draft berhasil digenerate dengan Gemini RAG!');
+                        return;
+                    } else if (data.error) {
+                        throw new Error(typeof data.error === 'string' ? data.error : (data.error.message || 'Gagal generate AI'));
+                    }
+                } catch (err) {
+                    console.error('Gemini API Error:', err);
+                    showToast('Gagal memanggil API AI, beralih ke generator lokal', 'fa-triangle-exclamation');
+                }
+            }
+
+            // Fallback Generator jika tanpa API Key
+            setTimeout(() => {
+                let generatedTitle = "";
+                let generatedContent = "";
+
+                if (category === 'khutbah') {
+                    generatedTitle = "Menjaga Konsistensi Amal dan Kebaikan di Era Digital";
+                    generatedContent = `
+                        <h2><strong>Khutbah: Menjaga Konsistensi Amal dan Kebaikan di Era Digital</strong></h2>
+                        ${bookReferenceNote}
+                        <p><em>Target Audiens: ${audience.toUpperCase()} | Tone: ${tone}</em></p>
+                        <p><strong>Awwalush-Kalam:</strong> Saudaraku yang dirahmati Allah, dalam kehidupan yang serba cepat ini, seringkali kita terjebak dalam kesibukan duniawi hingga melupakan esensi konsistensi dalam berbuat kebaikan.</p>
+                        <p>Sebagaimana referensi utama kita: <em>"${ref}"</em>, kebaikan sekecil apa pun yang dilakukan secara kontinyu jauh lebih dicintai dibanding amalan besar yang hanya dilakukan sesekali.</p>
+                        <h3>1. Menata Niat di Tengah Hiruk-Pikuk Informasi</h3>
+                        <p>Di era sekarang, fokus kita mudah terpecah. Oleh karena itu, penting untuk selalu meluruskan niat dan menyaring apa yang kita konsumsi maupun bagikan.</p>
+                        <h3>2. Langkah Nyata Konsistensi</h3>
+                        <ul>
+                            <li>Menentukan target harian yang realistis.</li>
+                            <li>Saling mengingatkan dalam komunitas positif.</li>
+                            <li>Memanfaatkan teknologi untuk menyebarkan nilai kebaikan.</li>
+                        </ul>
+                        <p>Semoga kita senantiasa diberikan keteguhan hati untuk terus melangkah di jalan kebaikan ini.</p>
+                    `;
+                } else if (category === 'script') {
+                    generatedTitle = "Script Video/Podcast: Rahasia Pembelajaran Efektif";
+                    generatedContent = `
+                        <h2><strong>[SCRIPT VIDEO / PODCAST]</strong></h2>
+                        ${bookReferenceNote}
+                        <p><strong>TOPIK:</strong> ${ref}</p>
+                        <p><strong>TONE:</strong> ${tone.toUpperCase()} | <strong>TARGET:</strong> ${audience.toUpperCase()}</p>
+                        <hr class="my-3"/>
+                        <p><strong>[00:00 - INTRO HOOK]</strong></p>
+                        <p>"Pernah gak sih merasa udah belajar seharian tapi ga ada yang nempel? Nah, di video kali ini kita bakal bedah cara cerdas belajar cepat!"</p>
+                        <p><strong>[00:45 - ISI UTAMA]</strong></p>
+                        <p>Pertama, fokus pada pemahaman konsep bukan sekadar menghafal. Berdasarkan referensi utama: <em>"${ref}"</em>, otak kita lebih mudah mengingat struktur cerita daripada fakta mentah.</p>
+                        <p><strong>[02:30 - POINT BREAKDOWN]</strong></p>
+                        <ul>
+                            <li>Teknik Pomodoro (25 menit fokus, 5 menit istirahat).</li>
+                            <li>Gunakan visualisasi dan penjelasan sederhana.</li>
+                        </ul>
+                    `;
+                } else {
+                    // Default Artikel / Sosmed / Buletin
+                    generatedTitle = "Panduan Praktis Mengembangkan Potensi Diri secara Optimal";
+                    generatedContent = `
+                        <h2><strong>Panduan Praktis Mengembangkan Potensi Diri</strong></h2>
+                        ${bookReferenceNote}
+                        <p>Dalam dunia yang berkembang pesat, kemampuan untuk beradaptasi dan belajar secara konsisten adalah kunci utama keberhasilan bagi <strong>${audience}</strong>.</p>
+                        <p>Berdasarkan referensi utama yang kita bahas: <em>"${ref}"</em>, terdapat beberapa strategi mendasar yang dapat langsung diterapkan dalam rutinitas harian.</p>
+                        <h3>Mengapa Hal Ini Penting?</h3>
+                        <p>Gaya pendekatan yang <strong>${tone}</strong> membantu kita memahami bahwa perubahan besar selalu dimulai dari langkah-langkah kecil yang disiplin.</p>
+                        <h3>Langkah Strategis:</h3>
+                        <ul>
+                            <li><strong>Evaluasi Rutinitas:</strong> Identifikasi area yang membutuhkan perbaikan.</li>
+                            <li><strong>Fokus Kata Kunci:</strong> ${keywords ? keywords : 'Produktivitas, Fokus, Pengembangan Diri'}.</li>
+                            <li><strong>Eksekusi Bertahap:</strong> Hindari beban kerja berlebih dalam satu waktu.</li>
+                        </ul>
+                    `;
+                }
+
+                if (cta === 'yes') {
+                    generatedContent += `
+                        <blockquote class="p-3 my-4 border-l-4 border-sky-500 bg-sky-50 dark:bg-sky-950/30 text-sky-900 dark:text-sky-200 rounded-r-lg">
+                            <strong>📢 Call to Action:</strong> Bagaimana pendapat Anda mengenai topik ini? Mari berdiskusi di kolom komentar!
+                        </blockquote>
+                    `;
+                }
+
+                // Otomatis bungkus konten ke dalam container semantik <article>
+                const wrappedContent = `
+<article class="article-content space-y-4">
+${generatedContent.trim()}
+</article>`.trim();
+
+                // Update UI Title and Content
+                document.getElementById('docTitle').value = generatedTitle;
+                editor.innerHTML = wrappedContent;
+                updateStats();
+
+                // Reset Button
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Draft</span>`;
+                btn.disabled = false;
+
+                // Close mobile sidebar if open
+                if (window.innerWidth < 1024) {
+                    toggleSidebar();
+                }
+
+                showToast('Draft konten berhasil dibuat!');
+            }, 600);
+        }
+
+        // --- Export Dropdown Toggle ---
+        function toggleExportDropdown(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('exportDropdownMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('exportDropdownContainer');
+            const menu = document.getElementById('exportDropdownMenu');
+            if (container && !container.contains(e.target) && menu && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // --- Publish Content to Portal (index.html) ---
+        async function publishToPortal() {
+            const title = document.getElementById('docTitle').value.trim();
+            const rawText = editor.innerText.trim();
+            const contentHTML = editor.innerHTML.trim();
+
+            if (!rawText || rawText === '') {
+                showToast('Konten masih kosong, belum bisa dipublikasikan!', 'fa-triangle-exclamation');
+                return;
+            }
+
+            const categorySelect = document.getElementById('paramCategory');
+            const category = categorySelect.value;
+            const categoryLabel = categorySelect.options[categorySelect.selectedIndex].text;
+            const tone = document.querySelector('input[name="paramTone"]:checked').value;
+            const audienceSelect = document.getElementById('paramAudience');
+            const audienceLabel = audienceSelect.options[audienceSelect.selectedIndex].text.replace(/^[^\s]+\s/, '');
+
+            const words = rawText.split(/\s+/).filter(w => w.length > 0).length;
+            const readTime = Math.max(1, Math.ceil(words / 200));
+            const snippet = rawText.length > 140 ? rawText.slice(0, 140).replace(/\s+/g, ' ') + '...' : rawText;
+
+            const dateFormatted = new Date().toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+
+            const newArticle = {
+                title: title || 'Draft Konten Baru',
+                category: category,
+                categoryLabel: categoryLabel,
+                tone: tone,
+                audience: audienceLabel,
+                words: words,
+                readTime: readTime,
+                date: dateFormatted,
+                snippet: snippet,
+                content: contentHTML
+            };
+
+            const btnPublish = document.getElementById('btnPublish');
+            const originalBtnHTML = btnPublish ? btnPublish.innerHTML : '';
+
+            if (supabaseClient) {
+                if (btnPublish) {
+                    btnPublish.disabled = true;
+                    btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>${editingArticleId ? 'Memperbarui...' : 'Menyimpan...'}</span>`;
+                }
+                showToast(`${editingArticleId ? 'Memperbarui di' : 'Menyimpan ke'} Supabase...`, 'fa-spinner fa-spin');
+                try {
+                    if (editingArticleId) {
+                        const { error } = await supabaseClient.from('articles').update({
+                            title: newArticle.title,
+                            category: newArticle.category,
+                            category_label: newArticle.categoryLabel,
+                            tone: newArticle.tone,
+                            audience: newArticle.audience,
+                            words: newArticle.words,
+                            read_time: newArticle.readTime,
+                            snippet: newArticle.snippet,
+                            content: newArticle.content
+                        }).eq('id', editingArticleId);
+                        if (error) throw error;
+                        showToast('Berhasil diperbarui di Supabase!', 'fa-circle-check');
+                        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+                        return;
+                    }
+
+                    const { error } = await supabaseClient.from('articles').insert([{
+                        title: newArticle.title,
+                        category: newArticle.category,
+                        category_label: newArticle.categoryLabel,
+                        tone: newArticle.tone,
+                        audience: newArticle.audience,
+                        words: newArticle.words,
+                        read_time: newArticle.readTime,
+                        snippet: newArticle.snippet,
+                        content: newArticle.content
+                    }]);
+
+                    if (error) throw error;
+                    showToast('Berhasil dipublikasikan ke Supabase!', 'fa-circle-check');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+                    return;
+                } catch (err) {
+                    console.error('Gagal simpan ke Supabase:', err);
+                    showToast('Gagal terhubung Supabase, menyimpan lokal...', 'fa-triangle-exclamation');
+                    if (btnPublish) {
+                        btnPublish.disabled = false;
+                        btnPublish.innerHTML = originalBtnHTML;
+                    }
+                }
+            }
+
+            // Fallback ke localStorage jika Supabase belum aktif atau gagal
+            let portalArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+            if (editingArticleId) {
+                const index = portalArticles.findIndex(a => String(a.id) === String(editingArticleId));
+                if (index > -1) {
+                    portalArticles[index] = { ...portalArticles[index], ...newArticle, id: editingArticleId };
+                } else {
+                    portalArticles.unshift({ ...newArticle, id: editingArticleId });
+                }
+            } else {
+                portalArticles.unshift({ ...newArticle, id: Date.now() });
+            }
+            localStorage.setItem('portal_articles', JSON.stringify(portalArticles));
+
+            showToast(editingArticleId ? 'Berhasil diperbarui di Portal!' : 'Berhasil dipublikasikan ke Portal!', 'fa-circle-check');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1200);
+        }
+
+        // --- Simple Export ---
+        function exportDoc(type = 'html') {
+            const title = document.getElementById('docTitle').value || 'draft-konten';
+            if (!editor.innerText.trim()) {
+                showToast('Tidak ada konten untuk di-export', 'fa-triangle-exclamation');
+                return;
+            }
+
+            let content = '';
+            let mimeType = 'text/plain;charset=utf-8';
+            let extension = type;
+
+            if (type === 'html') {
+                content = getFullHTMLDocument(title, editor.innerHTML);
+                mimeType = 'text/html;charset=utf-8';
+                extension = 'html';
+            } else if (type === 'markdown') {
+                content = `# ${title}\n\n` + editor.innerText;
+                mimeType = 'text/markdown;charset=utf-8';
+                extension = 'md';
+            } else {
+                content = editor.innerText;
+                extension = 'txt';
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${extension}`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            showToast(`Dokumen diexport sebagai .${extension}`);
+        }
+    </script>
+</body>
+</html>

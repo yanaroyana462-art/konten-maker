@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Artikel & Konten Kreatif - Content Maker Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#094e77',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        /* Line Clamp for Card Snippets */
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between transition-colors">
+        <div class="flex items-center gap-3">
+            <a href="#" class="flex items-center gap-2.5 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-layer-group text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 dark:text-white leading-tight text-base sm:text-lg">Content Maker <span class="text-sky-500 font-normal">Portal</span></h1>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">Perpustakaan Konten & Publikasi Kreatif</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Global Search Bar (Desktop) -->
+        <div class="hidden md:flex items-center flex-1 max-w-md mx-8 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-sm"></i>
+            <input type="text" id="searchInputDesktop" oninput="handleSearch(this.value)" placeholder="Cari judul, kata kunci, atau topik..." class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-sky-500 focus:bg-white dark:focus:bg-slate-950 outline-none transition">
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Ubah Tema">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+            <button onclick="toggleBookmarkFilter()" id="btnBookmarkFilter" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative" title="Tampilkan Favorit">
+                <i class="fa-regular fa-bookmark"></i>
+                <span id="bookmarkBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500"></span>
+            </button>
+            <a href="dashboard.html" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-xl hover:from-sky-600 hover:to-indigo-700 shadow-md shadow-sky-500/20 transition">
+                <i class="fa-solid fa-plus"></i>
+                <span class="hidden sm:inline">Buka Editor Studio</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-b from-sky-50/50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800 py-10 px-4 sm:px-8">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="max-w-2xl space-y-3">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/70 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 text-xs font-semibold">
+                    <i class="fa-solid fa-sparkles text-sky-500"></i>
+                    <span>Katalog Konten Terpublikasi</span>
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Eksplorasi Gagasan, Artikel, & Naskah Digital</h2>
+                <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Kumpulan artikel, khutbah, naskah podcast, dan wawasan terkini yang dihasilkan dan dikurasi langsung dari Content Maker Studio.
+                </p>
+
+                <!-- Mobile Search Bar -->
+                <div class="md:hidden relative pt-2">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-5 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInputMobile" oninput="handleSearch(this.value)" placeholder="Cari judul atau topik..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none shadow-sm">
+                </div>
+            </div>
+
+            <!-- Portal Statistics Widget -->
+            <div class="grid grid-cols-3 gap-3 sm:gap-4 bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+                <div class="text-center p-2">
+                    <div class="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400" id="statTotal">0</div>
+                    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Artikel</div>
+                </div>
+                <div class="text-center p-2 border-x border-slate-100 dark:border-slate-800">
+                    <div class="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">4</div>
+                    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Kategori</div>
+                </div>
+                <div class="text-center p-2">
+                    <div class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">12k+</div>
+                    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Pembaca</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+
+        <!-- Controls & Filter Toolbar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+            
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 text-xs sm:text-sm font-medium" id="categoryTabs">
+                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn px-3.5 py-2 rounded-xl bg-sky-600 text-white shadow-sm transition shrink-0">Semua</button>
+                <button onclick="setCategoryFilter('khutbah')" data-cat="khutbah" class="cat-btn px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">🕌 Khutbah</button>
+                <button onclick="setCategoryFilter('artikel')" data-cat="artikel" class="cat-btn px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">📰 Artikel</button>
+                <button onclick="setCategoryFilter('sosmed')" data-cat="sosmed" class="cat-btn px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">📲 Media Sosial</button>
+                <button onclick="setCategoryFilter('script')" data-cat="script" class="cat-btn px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0">🎙️ Script Video</button>
+            </div>
+
+            <!-- Secondary Filters & Sorting -->
+            <div class="flex items-center gap-2 self-end md:self-auto text-xs">
+                <!-- Tone Filter -->
+                <select id="filterTone" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
+                    <option value="all">Semua Tone</option>
+                    <option value="santai">Santai</option>
+                    <option value="formal">Formal</option>
+                    <option value="profesional">Profesional</option>
+                    <option value="inspiratif">Inspiratif</option>
+                </select>
+
+                <!-- Sorting Option -->
+                <select id="sortBy" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
+                    <option value="newest">Terbaru</option>
+                    <option value="oldest">Terlama</option>
+                    <option value="readtime">Waktu Baca Paling Singkat</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Cards Grid -->
+        <div id="articlesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic Articles inject via JS -->
+        </div>
+
+        <!-- Empty Results State -->
+        <div id="emptyState" class="hidden text-center py-16 space-y-3 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+            <div class="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-500 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Konten Tidak Ditemukan</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Tidak ada artikel yang cocok dengan pencarian atau filter yang Anda pilih. Coba sesuaikan kata kunci Anda.</p>
+            <button onclick="resetFilters()" class="mt-2 text-xs text-sky-600 dark:text-sky-400 font-semibold hover:underline">Reset Semua Filter</button>
+        </div>
+
+        <!-- Load More Container -->
+        <div id="loadMoreContainer" class="hidden flex flex-col items-center justify-center pt-4 pb-6 space-y-2">
+            <button id="btnLoadMore" onclick="loadMoreArticles()" class="px-6 py-2.5 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 shadow-sm transition flex items-center gap-2">
+                <span>Muat Lebih Banyak</span>
+                <i class="fa-solid fa-angle-down"></i>
+            </button>
+            <p id="loadMoreInfo" class="text-[11px] text-slate-400 font-mono">Menampilkan 0 dari 0 artikel</p>
+        </div>
+
+    </main>
+
+    <!-- Article Viewer Modal -->
+    <div id="articleModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl transform transition-all my-auto">
+            
+            <!-- Modal Header -->
+            <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start gap-4">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 flex-wrap" id="modalBadges"></div>
+                    <h2 id="modalTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white leading-snug"></h2>
+                    <div class="flex items-center gap-4 text-xs font-mono text-slate-400 pt-1">
+                        <span id="modalDate"></span>
+                        <span id="modalWordCount"></span>
+                        <span id="modalReadTime"></span>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-lg transition shrink-0">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div id="modalBody" class="p-6 sm:p-8 overflow-y-auto space-y-4 text-slate-700 dark:text-slate-200 leading-relaxed text-sm sm:text-base">
+                <!-- Article text injected here -->
+            </div>
+
+            <!-- Modal Footer Controls -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-b-2xl flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button onclick="shareArticle()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i class="fa-regular fa-share-from-square"></i> Salin Link
+                    </button>
+                    <button onclick="editCurrentArticle()" class="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40 transition">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button onclick="deleteCurrentArticle()" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                        <i class="fa-regular fa-trash-can"></i> Hapus
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="modalBookmarkBtn" onclick="toggleCurrentBookmark()" class="px-3.5 py-2 text-xs font-medium border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-bookmark"></i> Simpan
+                    </button>
+                    <button onclick="closeModal()" class="px-4 py-2 text-xs font-semibold bg-sky-600 text-white rounded-xl hover:bg-sky-700 transition">Tutup</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50 text-xs font-medium">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg">Pesan notifikasi</span>
+    </div>
+
+    <script>
+        // --- Sample Article Data Database ---
+        const sampleArticles = [
+            {
+                id: 1,
+                title: "Menjaga Konsistensi Amal dan Kebaikan di Era Digital",
+                category: "khutbah",
+                categoryLabel: "🕌 Khutbah",
+                tone: "formal",
+                audience: "Masyarakat Umum",
+                words: 620,
+                readTime: 3,
+                date: "30 Sep 2026",
+                snippet: "Dalam era serba cepat ini, menjaga konsistensi berbuat kebaikan sekecil apa pun jauh lebih dicintai daripada amalan besar yang hanya dilakukan sesekali.",
+                content: `
+                    <p><strong>Awwalush-Kalam:</strong> Saudaraku yang dirahmati Allah, dalam kehidupan yang serba cepat ini, seringkali kita terjebak dalam kesibukan duniawi hingga melupakan esensi konsistensi dalam berbuat kebaikan.</p>
+                    <p>Kebaikan sekecil apa pun yang dilakukan secara kontinyu jauh lebih dicintai dibanding amalan besar yang hanya dilakukan sesekali tanpa kesinambungan.</p>
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">1. Menata Niat di Tengah Hiruk-Pikuk Informasi</h3>
+                    <p>Di era digital sekarang, fokus kita mudah terpecah oleh godaan opini dan informasi masif. Oleh karena itu, penting untuk selalu meluruskan niat dan menyaring apa yang kita konsumsi maupun bagikan.</p>
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">2. Langkah Nyata Konsistensi</h3>
+                    <ul class="list-disc pl-5 space-y-1 my-2">
+                        <li>Menentukan target harian ibadah dan amal secara realistis.</li>
+                        <li>Membangun ekosistem pertemanan dan komunitas yang saling mengingatkan.</li>
+                        <li>Memanfaatkan platform digital sebagai media penyebar ilmu dan inspirasi positif.</li>
+                    </ul>
+                    <p class="mt-4">Semoga kita senantiasa diberikan keteguhan hati untuk terus melangkah di jalan kebaikan ini secara istiqamah.</p>
+                `
+            },
+            {
+                id: 2,
+                title: "Strategi Manajemen Waktu dan Focus Mode untuk Generasi Z",
+                category: "artikel",
+                categoryLabel: "📰 Artikel",
+                tone: "santai",
+                audience: "Remaja & Gen Z",
+                words: 480,
+                readTime: 2,
+                date: "28 Sep 2026",
+                snippet: "Banyak distraksi di HP membuat produktivitas kamu terganggu? Pelajari teknik Time Blocking dan metode Deep Work sederhana ini.",
+                content: `
+                    <p>Pernah ngerasa baru duduk mau belajar atau kerja, tapi tau-tau udah 2 jam scroll medsos? Kamu gak sendirian kok! Distraksi digital emang sengaja didesain buat narik perhatian kita.</p>
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">Rahasia Tetap Fokus:</h3>
+                    <p>Coba terapkan dua langkah ringkas ini:</p>
+                    <ul class="list-disc pl-5 space-y-1 my-2">
+                        <li><strong>Teknik Pomodoro:</strong> Pasang timer 25 menit fokus penuh, lalu beri apresiasi istirahat 5 menit.</li>
+                        <li><strong>Matikan Notifikasi Non-Penting:</strong> Gunakan fitur Focus Mode saat jam belajar utama.</li>
+                    </ul>
+                    <p class="mt-4">Konsistensi kecil setiap hari bakal ngasih dampak raksasa buat masa depan kamu!</p>
+                `
+            },
+            {
+                id: 3,
+                title: "Script Video: 3 Kebiasaan Pagi Pemimpin Berprestasi",
+                category: "script",
+                categoryLabel: "🎙️ Script Video",
+                tone: "inspiratif",
+                audience: "Mahasiswa & Profesional",
+                words: 350,
+                readTime: 2,
+                date: "25 Sep 2026",
+                snippet: "Naskah video durasi 2 menit untuk konten edukasi karir dan pengembangan diri harian.",
+                content: `
+                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800">[00:00 - HOOK VISUAL]</p>
+                    <p>"Tahu gak apa persamaan orang-orang sukses sebelum jam 8 pagi?"</p>
+                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 mt-3">[00:30 - POINT BREAKDOWN]</p>
+                    <ol class="list-decimal pl-5 space-y-2 my-2">
+                        <li><strong>Tanpa HP di 15 Menit Pertama:</strong> Beri napas bagi otak sebelum dibombardir notifikasi.</li>
+                        <li><strong>Hidrasi & Stretches:</strong> Minum air putih hangat untuk memicu energi metabolisme.</li>
+                        <li><strong>Tulis 3 Top Priorities:</strong> Tentukan 3 tugas terbesar yang wajib diselesaikan hari ini.</li>
+                    </ol>
+                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 mt-3">[01:45 - OUTRO & CTA]</p>
+                    <p>"Mana dari 3 kebiasaan ini yang udah kamu terapkan? Komen di bawah ya!"</p>
+                `
+            },
+            {
+                id: 4,
+                title: "Panduan Menyusun Content Calendar Media Sosial yang Rapi",
+                category: "sosmed",
+                categoryLabel: "📲 Media Sosial",
+                tone: "profesional",
+                audience: "Pekerja & Marketer",
+                words: 710,
+                readTime: 4,
+                date: "22 Sep 2026",
+                snippet: "Langkah terstruktur membangun perencanaan konten mingguan agar jadwal tayang konsisten tanpa rasa panik kehabisan ide.",
+                content: `
+                    <p>Membuat konten secara berkala membutuhkan sistem yang jelas. Tanpa perencanaan, kualitas materi postingan cenderung tidak konsisten.</p>
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">Pilar Konten Utama:</h3>
+                    <p>Bagi alokasi postingan ke dalam 3 jenis ide:</p>
+                    <ul class="list-disc pl-5 space-y-1 my-2">
+                        <li><strong>60% Edukasi & Nilai Tambah:</strong> Artikel tips, tutorial singkat, dan panduan.</li>
+                        <li><strong>30% Engagement:</strong> Polling, tanya-jawab, dan cerita personal/behind the scene.</li>
+                        <li><strong>10% Promosi Langsung:</strong> Panggilan aksi untuk penawaran produk atau layanan.</li>
+                    </ul>
+                `
+            }
+        ];
+
+        // --- Supabase Config ---
+        const SUPABASE_URL = 'https://rpsrkytnwlvopyjregb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_I9AFkQbjLJp_zjFKEOhjZg_xySjYzZt';
+        const supabaseClient = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        // --- Application State ---
+        let articles = [...sampleArticles];
+        let currentCategory = 'all';
+        const PAGE_SIZE = 6;
+        let visibleCount = PAGE_SIZE;
+        let searchQuery = '';
+        let bookmarkedIds = JSON.parse(localStorage.getItem('portal_bookmarks') || '[]');
+        let onlyBookmarks = false;
+        let activeModalArticle = null;
+
+        // --- Fetch Articles (Supabase with LocalStorage Fallback) ---
+        async function fetchArticles() {
+            let remoteArticles = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('articles')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (error) {
+                        console.error('Supabase fetch error:', error);
+                    } else if (data && data.length > 0) {
+                        remoteArticles = data.map(item => ({
+                            id: item.id,
+                            title: item.title,
+                            category: item.category,
+                            categoryLabel: item.category_label || item.categoryLabel || item.category,
+                            tone: item.tone,
+                            audience: item.audience,
+                            words: item.words || 0,
+                            readTime: item.read_time || item.readTime || 1,
+                            date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : (item.date || '-'),
+                            snippet: item.snippet,
+                            content: item.content
+                        }));
+                    }
+                } catch (err) {
+                    console.error('Supabase connection error:', err);
+                }
+            }
+
+            const storedArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+            articles = remoteArticles.length > 0 ? remoteArticles : (storedArticles.length > 0 ? [...storedArticles, ...sampleArticles] : [...sampleArticles]);
+        }
+
+        // --- Initialization ---
+        window.onload = async function() {
+            await fetchArticles();
+            updateStats();
+            updateBookmarkBadge();
+        };
+
+        // --- Dark Mode Toggle ---
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // --- Search Handler ---
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase().trim();
+            visibleCount = PAGE_SIZE;
+            // Keep desktop and mobile search inputs synced
+            document.getElementById('searchInputDesktop').value = val;
+            document.getElementById('searchInputMobile').value = val;
+            renderArticles();
+        }
+
+        // --- Category Tab Filter ---
+        function setCategoryFilter(cat) {
+            currentCategory = cat;
+            visibleCount = PAGE_SIZE;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "cat-btn px-3.5 py-2 rounded-xl bg-sky-600 text-white shadow-sm transition shrink-0 font-medium";
+                } else {
+                    btn.className = "cat-btn px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0 font-medium";
+                }
+            });
+            renderArticles();
+        }
+
+        // --- Bookmark Toggle Filter ---
+        function toggleBookmarkFilter() {
+            onlyBookmarks = !onlyBookmarks;
+            visibleCount = PAGE_SIZE;
+            const btn = document.getElementById('btnBookmarkFilter');
+            if (onlyBookmarks) {
+                btn.classList.add('bg-sky-100', 'dark:bg-sky-950', 'text-sky-600', 'dark:text-sky-400');
+                showToast('Menampilkan artikel disimpan');
+            } else {
+                btn.classList.remove('bg-sky-100', 'dark:bg-sky-950', 'text-sky-600', 'dark:text-sky-400');
+            }
+            renderArticles();
+        }
+
+        // --- Filter Application Logic ---
+        function applyFilters() {
+            visibleCount = PAGE_SIZE;
+            renderArticles();
+        }
+
+        function loadMoreArticles() {
+            visibleCount += PAGE_SIZE;
+            renderArticles();
+        }
+
+        function resetFilters() {
+            searchQuery = '';
+            currentCategory = 'all';
+            visibleCount = PAGE_SIZE;
+            onlyBookmarks = false;
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            document.getElementById('filterTone').value = 'all';
+            document.getElementById('sortBy').value = 'newest';
+            setCategoryFilter('all');
+        }
+
+        // --- Card Grid Renderer ---
+        function renderArticles() {
+            const grid = document.getElementById('articlesGrid');
+            const empty = document.getElementById('emptyState');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const btnLoadMore = document.getElementById('btnLoadMore');
+            const loadMoreInfo = document.getElementById('loadMoreInfo');
+            const selectedTone = document.getElementById('filterTone').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            // Filtering
+            let filtered = articles.filter(art => {
+                const matchesCat = (currentCategory === 'all') || (art.category === currentCategory);
+                const matchesSearch = !searchQuery || 
+                    art.title.toLowerCase().includes(searchQuery) || 
+                    art.snippet.toLowerCase().includes(searchQuery) ||
+                    art.audience.toLowerCase().includes(searchQuery);
+                const matchesTone = (selectedTone === 'all') || (art.tone === selectedTone);
+                const matchesBookmark = !onlyBookmarks || bookmarkedIds.some(bId => String(bId) === String(art.id));
+
+                return matchesCat && matchesSearch && matchesTone && matchesBookmark;
+            });
+
+            // Sorting
+            if (sortBy === 'newest') {
+                filtered.sort((a, b) => b.id - a.id);
+            } else if (sortBy === 'oldest') {
+                filtered.sort((a, b) => a.id - b.id);
+            } else if (sortBy === 'readtime') {
+                filtered.sort((a, b) => a.readTime - b.readTime);
+            }
+
+            // UI Render
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            // Pagination slicing
+            const paginated = filtered.slice(0, visibleCount);
+
+            // Update Load More controls
+            if (loadMoreContainer) {
+                if (filtered.length > PAGE_SIZE) {
+                    loadMoreContainer.classList.remove('hidden');
+                    loadMoreInfo.innerText = `Menampilkan ${paginated.length} dari ${filtered.length} artikel`;
+                    if (paginated.length >= filtered.length) {
+                        btnLoadMore.classList.add('hidden');
+                    } else {
+                        btnLoadMore.classList.remove('hidden');
+                    }
+                } else {
+                    loadMoreContainer.classList.add('hidden');
+                }
+            }
+            grid.innerHTML = paginated.map(art => {
+                const isBookmarked = bookmarkedIds.some(bId => String(bId) === String(art.id));
+                return `
+                    <article class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:shadow-xl hover:border-sky-500/50 dark:hover:border-sky-500/50 transition-all duration-200 group">
+                        <div class="space-y-3">
+                            <!-- Category Badge & Bookmark -->
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/40">
+                                    ${art.categoryLabel}
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="editArticle('${art.id}', event)" class="text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 transition" title="Edit Artikel">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="deleteArticle('${art.id}', event)" class="text-slate-400 hover:text-rose-500 p-1.5 transition" title="Hapus Artikel">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                    <button onclick="toggleBookmark('${art.id}', event)" class="text-slate-400 hover:text-sky-500 p-1.5 transition" title="Simpan ke Favorit">
+                                        <i class="${isBookmarked ? 'fa-solid text-sky-500' : 'fa-regular'} fa-bookmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Title -->
+                            <h3 onclick="openModal('${art.id}')" class="font-bold text-slate-900 dark:text-white text-base leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 cursor-pointer transition">
+                                ${art.title}
+                            </h3>
+
+                            <!-- Snippet -->
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                                ${art.snippet}
+                            </p>
+                        </div>
+
+                        <!-- Footer Metadata & Action -->
+                        <div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+                            <div class="flex items-center gap-3">
+                                <span><i class="fa-regular fa-clock mr-1"></i>${art.readTime} min</span>
+                                <span><i class="fa-regular fa-user mr-1"></i>${art.audience.split(' ')[0]}</span>
+                            </div>
+                            <button onclick="openModal('${art.id}')" class="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1">
+                                Baca <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // --- Modal Dialog Actions ---
+        function openModal(id) {
+            const art = articles.find(a => String(a.id) === String(id));
+            if (!art) return;
+
+            activeModalArticle = art;
+            document.getElementById('modalTitle').innerText = art.title;
+            document.getElementById('modalDate').innerText = `📅 ${art.date}`;
+            document.getElementById('modalWordCount').innerText = `📝 ${art.words} kata`;
+            document.getElementById('modalReadTime').innerText = `⏱️ ${art.readTime} min baca`;
+
+            document.getElementById('modalBadges').innerHTML = `
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">${art.categoryLabel}</span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tone: ${art.tone}</span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Segmen: ${art.audience}</span>
+            `;
+
+            document.getElementById('modalBody').innerHTML = art.content;
+            updateModalBookmarkBtn();
+
+            document.getElementById('articleModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('articleModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            activeModalArticle = null;
+        }
+
+        // --- Article Edit & Delete Actions ---
+        function editArticle(id, event) {
+            if (event) event.stopPropagation();
+            window.location.href = `dashboard.html?id=${encodeURIComponent(id)}`;
+        }
+
+        function editCurrentArticle() {
+            if (activeModalArticle) {
+                editArticle(activeModalArticle.id);
+            }
+        }
+
+        async function deleteArticle(id, event) {
+            if (event) event.stopPropagation();
+            if (!confirm('Apakah Anda yakin ingin menghapus artikel ini?')) return;
+
+            if (supabaseClient) {
+                showToast('Menghapus artikel...', 'fa-spinner fa-spin');
+                try {
+                    const { error } = await supabaseClient.from('articles').delete().eq('id', id);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error('Gagal menghapus dari Supabase:', err);
+                    showToast('Gagal menghapus dari Supabase', 'fa-triangle-exclamation');
+                    return;
+                }
+            }
+
+            // Sinkronkan state lokal & bookmarks
+            let stored = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+            stored = stored.filter(a => String(a.id) !== String(id));
+            localStorage.setItem('portal_articles', JSON.stringify(stored));
+            articles = articles.filter(a => String(a.id) !== String(id));
+            bookmarkedIds = bookmarkedIds.filter(bId => String(bId) !== String(id));
+            localStorage.setItem('portal_bookmarks', JSON.stringify(bookmarkedIds));
+
+            updateBookmarkBadge();
+            if (activeModalArticle && String(activeModalArticle.id) === String(id)) closeModal();
+            renderArticles();
+            updateStats();
+            showToast('Artikel berhasil dihapus!', 'fa-trash-can');
+        }
+
+        function deleteCurrentArticle() {
+            if (activeModalArticle) {
+                deleteArticle(activeModalArticle.id);
+            }
+        }
+
+        // --- Bookmark Actions ---
+        function toggleBookmark(id, event) {
+            if (event) event.stopPropagation();
+            const index = bookmarkedIds.findIndex(bId => String(bId) === String(id));
+            if (index > -1) {
+                bookmarkedIds.splice(index, 1);
+                showToast('Dihapus dari favorit', 'fa-bookmark');
+            } else {
+                bookmarkedIds.push(id);
+                showToast('Disimpan ke favorit');
+            }
+            localStorage.setItem('portal_bookmarks', JSON.stringify(bookmarkedIds));
+            updateBookmarkBadge();
+            renderArticles();
+            if (activeModalArticle && String(activeModalArticle.id) === String(id)) {
+                updateModalBookmarkBtn();
+            }
+        }
+
+        function toggleCurrentBookmark() {
+            if (activeModalArticle) {
+                toggleBookmark(activeModalArticle.id);
+            }
+        }
+
+        function updateModalBookmarkBtn() {
+            if (!activeModalArticle) return;
+            const btn = document.getElementById('modalBookmarkBtn');
+            const isSaved = bookmarkedIds.some(bId => String(bId) === String(activeModalArticle.id));
+            btn.innerHTML = `<i class="${isSaved ? 'fa-solid text-sky-500' : 'fa-regular'} fa-bookmark"></i> ${isSaved ? 'Tersimpan' : 'Simpan'}`;
+        }
+
+        function updateBookmarkBadge() {
+            const badge = document.getElementById('bookmarkBadge');
+            if (bookmarkedIds.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // --- Portal Stats Tracker ---
+        function updateStats() {
+            document.getElementById('statTotal').innerText = articles.length;
+        }
+
+        // --- Toast Notification System ---
+        function showToast(msg, icon = 'fa-circle-check') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = msg;
+            toastIcon.className = `fa-solid ${icon} text-emerald-400 dark:text-emerald-600`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // --- Share Article URL Helper ---
+        function shareArticle() {
+            if (activeModalArticle) {
+                const dummyUrl = `${window.location.origin}#article-${activeModalArticle.id}`;
+                const textarea = document.createElement('textarea');
+                textarea.value = dummyUrl;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Tautan artikel berhasil disalin!');
+            }
+        }
+    </script>
+</body>
+</html>
