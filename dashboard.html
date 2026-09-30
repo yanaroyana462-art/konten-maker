@@ -383,7 +383,7 @@
         // Initial setup
         window.onload = async function() {
             updateStats();
-            renderUploadedBooks();
+            await loadBooksFromSupabase();
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) document.getElementById('geminiApiKey').value = savedKey;
             const urlParams = new URLSearchParams(window.location.search);
@@ -489,10 +489,39 @@
             return scoredChunks.slice(0, topK);
         }
 
+        // --- Load Books from Supabase (with LocalStorage Fallback) ---
+        async function loadBooksFromSupabase() {
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('documents')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (!error && data && data.length > 0) {
+                        uploadedBooks = data.map(doc => ({
+                            id: doc.id,
+                            name: doc.file_name,
+                            size: doc.file_size > 1024 * 1024 
+                                ? (doc.file_size / (1024 * 1024)).toFixed(1) + ' MB' 
+                                : Math.round(doc.file_size / 1024) + ' KB',
+                            date: doc.created_at ? new Date(doc.created_at).toLocaleDateString('id-ID') : 'Baru saja',
+                            selected: true,
+                            extractedText: doc.content_text || ''
+                        }));
+                        saveBooksToStorage();
+                    }
+                } catch (err) {
+                    console.warn('Gagal memuat dokumen dari Supabase:', err);
+                }
+            }
+            renderUploadedBooks();
+        }
+
         // --- Book Upload & Management ---
         async function handleBookUpload(event) {
             const files = event.target.files;
-            if (!files || files.length === 0 || !supabaseClient) return;
+            if (!files || files.length === 0) return;
 
             showToast('Mengekstrak teks dokumen...', 'fa-spinner fa-spin');
 
@@ -514,34 +543,46 @@
                     console.error('Gagal mengekstrak teks:', file.name, err);
                 }
 
-                // 2. Upload file ke Supabase Storage
-                const filePath = `public/${Date.now()}-${file.name}`;
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('documents') // Nama bucket Anda
-                    .upload(filePath, file);
+                let savedToSupabase = false;
 
-                if (uploadError) {
-                    console.error('Gagal upload ke Supabase Storage:', uploadError);
-                    showToast(`Gagal mengunggah ${file.name}`, 'fa-triangle-exclamation');
-                    continue; // Lanjut ke file berikutnya jika gagal
+                // Coba simpan ke Supabase jika client aktif
+                if (supabaseClient) {
+                    try {
+                        const filePath = `public/${Date.now()}-${file.name}`;
+                        const { error: uploadError } = await supabaseClient.storage
+                            .from('documents')
+                            .upload(filePath, file);
+
+                        if (!uploadError) {
+                            const { error: dbError } = await supabaseClient.from('documents').insert({
+                                file_name: file.name,
+                                storage_path: filePath,
+                                file_size: file.size,
+                                content_text: extractedText ? extractedText.slice(0, 25000) : ''
+                            });
+                            if (!dbError) {
+                                savedToSupabase = true;
+                            }
+                        } else {
+                            console.warn('Storage upload error:', uploadError);
+                        }
+                    } catch (netErr) {
+                        console.warn('Koneksi Supabase gagal, beralih ke penyimpanan lokal:', netErr);
+                    }
                 }
 
-                // 3. Simpan metadata ke tabel 'documents' di database
-                const { error: dbError } = await supabaseClient.from('documents').insert({
-                    file_name: file.name,
-                    storage_path: filePath,
-                    file_size: file.size,
-                    content_text: extractedText ? extractedText.slice(0, 25000) : '' // Simpan teks hasil ekstraksi
-                });
-
-                if (dbError) {
-                    console.error('Gagal simpan ke database Supabase:', dbError);
-                    showToast(`Gagal menyimpan metadata ${file.name}`, 'fa-triangle-exclamation');
-                    continue;
+                // Fallback ke penyimpanan lokal jika Supabase gagal/offline
+                if (!savedToSupabase) {
+                    uploadedBooks.unshift({
+                        id: Date.now() + i,
+                        name: file.name,
+                        size: formattedSize,
+                        date: 'Baru saja',
+                        selected: true,
+                        extractedText: extractedText ? extractedText.slice(0, 10000) : ''
+                    });
+                    saveBooksToStorage();
                 }
-
-                // (Opsional) Jika masih ingin menggunakan state lokal untuk tampilan UI sementara
-                // uploadedBooks.unshift({ ... });
             }
 
             // Muat ulang daftar buku dari database untuk memastikan sinkron
