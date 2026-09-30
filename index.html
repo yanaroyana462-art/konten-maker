@@ -218,18 +218,18 @@
             <div class="flex items-center gap-2 self-end md:self-auto text-xs">
                 <!-- Tone Filter -->
                 <select id="filterTone" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
-                    <option value="all">Semua Tone</option>
-                    <option value="santai">Santai</option>
-                    <option value="formal">Formal</option>
-                    <option value="profesional">Profesional</option>
-                    <option value="inspiratif">Inspiratif</option>
+                    <option value="all" id="opt-tone-all">Semua Tone</option>
+                    <option value="santai" id="opt-tone-santai">Santai</option>
+                    <option value="formal" id="opt-tone-formal">Formal</option>
+                    <option value="profesional" id="opt-tone-profesional">Profesional</option>
+                    <option value="inspiratif" id="opt-tone-inspiratif">Inspiratif</option>
                 </select>
 
                 <!-- Sorting Option -->
                 <select id="sortBy" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
-                    <option value="newest">Terbaru</option>
-                    <option value="oldest">Terlama</option>
-                    <option value="readtime">Waktu Baca Paling Singkat</option>
+                    <option value="newest" id="opt-sort-newest">Terbaru</option>
+                    <option value="oldest" id="opt-sort-oldest">Terlama</option>
+                    <option value="readtime" id="opt-sort-readtime">Waktu Baca Paling Singkat</option>
                 </select>
             </div>
         </div>
@@ -244,15 +244,15 @@
             <div class="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-500 flex items-center justify-center mx-auto text-xl">
                 <i class="fa-solid fa-folder-open"></i>
             </div>
-            <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Konten Tidak Ditemukan</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Tidak ada artikel yang cocok dengan pencarian atau filter yang Anda pilih. Coba sesuaikan kata kunci Anda.</p>
-            <button onclick="resetFilters()" class="mt-2 text-xs text-sky-600 dark:text-sky-400 font-semibold hover:underline">Reset Semua Filter</button>
+            <h3 id="t-emptyTitle" class="text-base font-bold text-slate-800 dark:text-slate-200">Konten Tidak Ditemukan</h3>
+            <p id="t-emptyDesc" class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Tidak ada artikel yang cocok dengan pencarian atau filter yang Anda pilih. Coba sesuaikan kata kunci Anda.</p>
+            <button onclick="resetFilters()" id="t-emptyReset" class="mt-2 text-xs text-sky-600 dark:text-sky-400 font-semibold hover:underline">Reset Semua Filter</button>
         </div>
 
         <!-- Load More Container -->
         <div id="loadMoreContainer" class="hidden flex flex-col items-center justify-center pt-4 pb-6 space-y-2">
             <button id="btnLoadMore" onclick="loadMoreArticles()" class="px-6 py-2.5 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 shadow-sm transition flex items-center gap-2">
-                <span>Muat Lebih Banyak</span>
+                <span id="t-btnLoadMore">Muat Lebih Banyak</span>
                 <i class="fa-solid fa-angle-down"></i>
             </button>
             <p id="loadMoreInfo" class="text-[11px] text-slate-400 font-mono">Menampilkan 0 dari 0 artikel</p>
@@ -320,15 +320,15 @@
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-emerald-500/20 text-2xl">
                     <i class="fa-brands fa-whatsapp"></i>
                 </div>
-                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Selamat Datang di Portal</h2>
-                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                <h2 id="t-leadTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Selamat Datang di Portal</h2>
+                <p id="t-leadDesc" class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Silakan masukkan nama dan nomor WhatsApp Anda untuk membuka akses penuh ke seluruh artikel dan koleksi konten.
                 </p>
             </div>
 
             <form id="leadGateForm" onsubmit="handleLeadSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                    <label id="t-leadNameLabel" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
                     <div class="relative">
                         <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400 text-sm"></i>
                         <input type="text" id="leadNameInput" required placeholder="Contoh: Budi Santoso" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition text-slate-900 dark:text-white">
@@ -336,20 +336,20 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nomor WhatsApp</label>
+                    <label id="t-leadPhoneLabel" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nomor WhatsApp</label>
                     <div class="relative">
                         <i class="fa-brands fa-whatsapp absolute left-3.5 top-3 text-emerald-500 text-base"></i>
                         <input type="tel" id="leadPhoneInput" required placeholder="Contoh: 081234567890" pattern="^(\+62|62|0)[0-9]{8,15}$" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition text-slate-900 dark:text-white font-mono">
                     </div>
-                    <span class="text-[10px] text-slate-400 mt-1 block">Format: diawali 08... atau 62...</span>
+                    <span id="t-leadPhoneHelp" class="text-[10px] text-slate-400 mt-1 block">Format: diawali 08... atau 62...</span>
                 </div>
 
                 <button type="submit" id="btnSubmitLead" class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition">
-                    <span>Buka Akses Artikel</span>
+                    <span id="t-btnSubmitLead">Buka Akses Artikel</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
 
-                <p class="text-[10px] text-center text-slate-400 leading-relaxed">
+                <p id="t-leadPrivacy" class="text-[10px] text-center text-slate-400 leading-relaxed">
                     Data Anda tersimpan dengan aman dan hanya digunakan untuk keperluan informasi konten terbaru.
                 </p>
             </form>
@@ -497,7 +497,30 @@
                 btnRead: 'Baca',
                 words: 'kata',
                 minRead: 'min baca',
-                readMin: 'mnt'
+                readMin: 'mnt',
+                toneAll: 'Semua Tone',
+                toneSantai: 'Santai',
+                toneFormal: 'Formal',
+                toneProfesional: 'Profesional',
+                toneInspiratif: 'Inspiratif',
+                sortNewest: 'Terbaru',
+                sortOldest: 'Terlama',
+                sortReadtime: 'Waktu Baca Singkat',
+                emptyTitle: 'Konten Tidak Ditemukan',
+                emptyDesc: 'Tidak ada artikel yang cocok dengan pencarian atau filter yang Anda pilih.',
+                emptyReset: 'Reset Semua Filter',
+                loadMore: 'Muat Lebih Banyak',
+                showingArticles: (vis, total) => `Menampilkan ${vis} dari ${total} artikel`,
+                leadTitle: 'Selamat Datang di Portal',
+                leadDesc: 'Silakan masukkan nama dan nomor WhatsApp Anda untuk membuka akses penuh ke seluruh koleksi konten.',
+                leadNameLabel: 'Nama Lengkap',
+                leadNamePlaceholder: 'Contoh: Budi Santoso',
+                leadPhoneLabel: 'Nomor WhatsApp',
+                leadPhoneHelp: 'Format: diawali 08... atau 62...',
+                leadBtnSubmit: 'Buka Akses Artikel',
+                leadPrivacy: 'Data Anda tersimpan dengan aman dan hanya digunakan untuk informasi konten terbaru.',
+                labelTone: 'Tone',
+                labelSegment: 'Segmen'
             },
             en: {
                 headerSubtitle: 'Creative Content Library & Publication',
@@ -534,7 +557,30 @@
                 btnRead: 'Read',
                 words: 'words',
                 minRead: 'min read',
-                readMin: 'min'
+                readMin: 'min',
+                toneAll: 'All Tones',
+                toneSantai: 'Casual',
+                toneFormal: 'Formal',
+                toneProfesional: 'Professional',
+                toneInspiratif: 'Inspirational',
+                sortNewest: 'Newest',
+                sortOldest: 'Oldest',
+                sortReadtime: 'Shortest Read Time',
+                emptyTitle: 'Content Not Found',
+                emptyDesc: 'No articles match your current search or selected filters.',
+                emptyReset: 'Reset All Filters',
+                loadMore: 'Load More',
+                showingArticles: (vis, total) => `Showing ${vis} of ${total} articles`,
+                leadTitle: 'Welcome to the Portal',
+                leadDesc: 'Please enter your name and WhatsApp number to unlock full access to all articles and collections.',
+                leadNameLabel: 'Full Name',
+                leadNamePlaceholder: 'e.g. John Doe',
+                leadPhoneLabel: 'WhatsApp Number',
+                leadPhoneHelp: 'Format: starts with 08... or country code',
+                leadBtnSubmit: 'Unlock Article Access',
+                leadPrivacy: 'Your data is securely stored and only used for updates on new content.',
+                labelTone: 'Tone',
+                labelSegment: 'Audience'
             },
             ar: {
                 headerSubtitle: 'مكتبة المحتوى الإبداعي والنشر الرقمي',
@@ -571,7 +617,30 @@
                 btnRead: 'قراءة',
                 words: 'كلمة',
                 minRead: 'دقائق للقراءة',
-                readMin: 'د'
+                readMin: 'د',
+                toneAll: 'كافة الأساليب',
+                toneSantai: 'ودي / غير رسمي',
+                toneFormal: 'رسمي',
+                toneProfesional: 'احترافي',
+                toneInspiratif: 'ملهم',
+                sortNewest: 'الأحدث',
+                sortOldest: 'الأقدم',
+                sortReadtime: 'الأقصر قراءة',
+                emptyTitle: 'لم يتم العثور على محتوى',
+                emptyDesc: 'لا توجد مقالات تتطابق مع بحثك أو الفلاتر المحددة.',
+                emptyReset: 'إعادة ضبط الفلاتر',
+                loadMore: 'تحميل المزيد',
+                showingArticles: (vis, total) => `عرض ${vis} من أصل ${total} مقال`,
+                leadTitle: 'مرحبًا بك في البوابة',
+                leadDesc: 'يرجى إدخال اسمك ورقم الواتساب الخاص بك لفتح الوصول الكامل لجميع المقالات والمحتوى.',
+                leadNameLabel: 'الاسم الكامل',
+                leadNamePlaceholder: 'مثال: أحمد عبد الله',
+                leadPhoneLabel: 'رقم الواتساب',
+                leadPhoneHelp: 'الصيغة: يبدأ بـ 08... أو المفتاح الدولي',
+                leadBtnSubmit: 'فتح الوصول للمقالات',
+                leadPrivacy: 'بياناتك محفوظة بأمان وتُستخدم فقط لإشعارك بالمحتوى الجديد.',
+                labelTone: 'الأسلوب',
+                labelSegment: 'الجمهور'
             }
         };
         let currentLang = localStorage.getItem('portal_language') || 'id';
@@ -711,6 +780,27 @@
             safeSetText('t-btnSave', t.btnSave);
             safeSetText('t-btnEdit', t.btnEdit);
             safeSetText('t-btnDelete', t.btnDelete);
+            safeSetText('opt-tone-all', t.toneAll);
+            safeSetText('opt-tone-santai', t.toneSantai);
+            safeSetText('opt-tone-formal', t.toneFormal);
+            safeSetText('opt-tone-profesional', t.toneProfesional);
+            safeSetText('opt-tone-inspiratif', t.toneInspiratif);
+            safeSetText('opt-sort-newest', t.sortNewest);
+            safeSetText('opt-sort-oldest', t.sortOldest);
+            safeSetText('opt-sort-readtime', t.sortReadtime);
+            safeSetText('t-emptyTitle', t.emptyTitle);
+            safeSetText('t-emptyDesc', t.emptyDesc);
+            safeSetText('t-emptyReset', t.emptyReset);
+            safeSetText('t-btnLoadMore', t.loadMore);
+            safeSetText('t-leadTitle', t.leadTitle);
+            safeSetText('t-leadDesc', t.leadDesc);
+            safeSetText('t-leadNameLabel', t.leadNameLabel);
+            safeSetText('t-leadPhoneLabel', t.leadPhoneLabel);
+            safeSetText('t-leadPhoneHelp', t.leadPhoneHelp);
+            safeSetText('t-btnSubmitLead', t.leadBtnSubmit);
+            safeSetText('t-leadPrivacy', t.leadPrivacy);
+            const leadInput = document.getElementById('leadNameInput');
+            if (leadInput) leadInput.placeholder = t.leadNamePlaceholder;
 
             const searchDesk = document.getElementById('searchInputDesktop');
             const searchMob = document.getElementById('searchInputMobile');
@@ -878,6 +968,19 @@
             setCategoryFilter('all');
         }
 
+        // --- Category Label Localization Helper ---
+        function getCategoryLabel(category, lang) {
+            const catMap = {
+                khutbah: { id: '🕌 Khutbah / Tausiyah', en: '🕌 Sermon / Tausiyah', ar: '🕌 خطبة / موعظة' },
+                artikel: { id: '📰 Artikel / Blog Post', en: '📰 Article / Blog Post', ar: '📰 مقال / تدوينة' },
+                sosmed: { id: '📲 Media Sosial', en: '📲 Social Media', ar: '📲 منشورات التواصل' },
+                script: { id: '🎙️ Script Video', en: '🎙️ Video Script', ar: '🎙️ سيناريو فيديو' },
+                newsletter: { id: '✉️ Newsletter', en: '✉️ Newsletter', ar: '✉️ نشرة بريدية' },
+                buletin: { id: '📄 Buletin', en: '📄 Bulletin', ar: '📄 نشرة إخبارية' }
+            };
+            return catMap[category]?.[lang] || catMap[category]?.id || category;
+        }
+
         // --- Card Grid Renderer ---
         function renderArticles() {
             const grid = document.getElementById('articlesGrid');
@@ -927,7 +1030,7 @@
             if (loadMoreContainer) {
                 if (filtered.length > PAGE_SIZE) {
                     loadMoreContainer.classList.remove('hidden');
-                    loadMoreInfo.innerText = `Menampilkan ${paginated.length} dari ${filtered.length} artikel`;
+                    loadMoreInfo.innerText = t.showingArticles ? t.showingArticles(paginated.length, filtered.length) : `Menampilkan ${paginated.length} dari ${filtered.length} artikel`;
                     if (paginated.length >= filtered.length) {
                         btnLoadMore.classList.add('hidden');
                     } else {
@@ -947,7 +1050,7 @@
                             <!-- Category Badge & Bookmark -->
                             <div class="flex items-center justify-between">
                                 <span class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/40">
-                                    ${art.categoryLabel}
+                                    ${getCategoryLabel(art.category, currentLang)}
                                 </span>
                                 <div class="flex items-center gap-1">
                                     <button onclick="shareArticle('${art.id}', event)" class="text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 transition" title="Bagikan Cuplikan & Link">
@@ -1003,10 +1106,11 @@
             document.getElementById('modalWordCount').innerText = `📝 ${art.words} ${t.words}`;
             document.getElementById('modalReadTime').innerText = `⏱️ ${art.readTime} ${t.minRead}`;
 
+            const localizedCategory = getCategoryLabel(art.category, currentLang);
             document.getElementById('modalBadges').innerHTML = `
-                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">${art.categoryLabel}</span>
-                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tone: ${art.tone}</span>
-                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Segmen: ${art.audience}</span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">${localizedCategory}</span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${t.labelTone}: ${art.tone}</span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${t.labelSegment}: ${art.audience}</span>
             `;
 
             document.getElementById('modalBody').innerHTML = art.content;
