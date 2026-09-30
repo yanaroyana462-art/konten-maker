@@ -1011,160 +1011,82 @@ ${editor.innerHTML}`;
             // Show loading animation on button
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Memproses...</span>`;
             btn.disabled = true;
+            showToast('Menghubungi Gemini AI...', 'fa-spinner fa-spin');
 
-            // Gunakan Gemini AI (melalui Serverless Function Vercel atau direct API key jika diinput manual)
+            const targetLang = language === 'ar' ? 'Arab (Fusha/Modern Standard Arabic)' : (language === 'en' ? 'Inggris' : 'Indonesia');
+            let prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
+TOPIK: ${ref}
+KATA KUNCI: ${keywords || '-'}`;
+
             if (contextText) {
-                try {
-                    const targetLang = language === 'ar' ? 'Arab (Fusha/Modern Standard Arabic)' : (language === 'en' ? 'Inggris' : 'Indonesia');
-                    const prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
-
-ATURAN KETAT RAG:
+                prompt += `\n\nATURAN KETAT RAG:
 1. Anda WAJIB mengambil argumen, fakta, dan gagasan utama HANYA dari [KONTEKS BUKU] di bawah ini.
 2. Jangan membuat asumsi di luar konteks yang diberikan.
 3. Sisipkan sitasi rujukan buku di dalam isi tulisan.
 
 [KONTEKS BUKU]:
-${contextText}
-
-TOPIK TAMBAHAN: ${ref}
-KATA KUNCI: ${keywords}
-Format output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, tanpa markdown \`\`\`html).`;
-
-                    let response;
-                    if (apiKey) {
-                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                        });
-                    } else {
-                        response = await fetch('/api/generate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prompt })
-                        });
-                    }
-
-                    const rawText = await response.text();
-                    let data;
-                    try {
-                        data = JSON.parse(rawText);
-                    } catch (parseErr) {
-                        throw new Error(`Server mengembalikan status ${response.status} (bukan JSON): ${rawText.slice(0, 100)}`);
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(data.error?.message || data.error || `HTTP ${response.status}`);
-                    }
-
-                    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                        let resultHTML = data.candidates[0].content.parts[0].text;
-                        resultHTML = resultHTML.replace(/```html|```/g, '').trim();
-                        editor.innerHTML = `<article class="article-content space-y-4">${bookReferenceNote}${resultHTML}</article>`;
-                        updateStats();
-                        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Draft</span>`;
-                        btn.disabled = false;
-                        showToast('Draft berhasil digenerate dengan Gemini RAG!');
-                        return;
-                    } else if (data.error) {
-                        throw new Error(typeof data.error === 'string' ? data.error : (data.error.message || 'Gagal generate AI'));
-                    }
-                } catch (err) {
-                    console.error('Gemini API Error:', err);
-                    showToast('Gagal memanggil API AI, beralih ke generator lokal', 'fa-triangle-exclamation');
-                }
+${contextText}`;
             }
 
-            // Fallback Generator jika tanpa API Key
-            setTimeout(() => {
-                let generatedTitle = "";
-                let generatedContent = "";
+            if (cta === 'yes') {
+                prompt += `\n\nSertakan Call to Action (CTA) yang menarik di akhir konten.`;
+            }
 
-                if (category === 'khutbah') {
-                    generatedTitle = "Menjaga Konsistensi Amal dan Kebaikan di Era Digital";
-                    generatedContent = `
-                        <h2><strong>Khutbah: Menjaga Konsistensi Amal dan Kebaikan di Era Digital</strong></h2>
-                        ${bookReferenceNote}
-                        <p><em>Target Audiens: ${audience.toUpperCase()} | Tone: ${tone}</em></p>
-                        <p><strong>Awwalush-Kalam:</strong> Saudaraku yang dirahmati Allah, dalam kehidupan yang serba cepat ini, seringkali kita terjebak dalam kesibukan duniawi hingga melupakan esensi konsistensi dalam berbuat kebaikan.</p>
-                        <p>Sebagaimana referensi utama kita: <em>"${ref}"</em>, kebaikan sekecil apa pun yang dilakukan secara kontinyu jauh lebih dicintai dibanding amalan besar yang hanya dilakukan sesekali.</p>
-                        <h3>1. Menata Niat di Tengah Hiruk-Pikuk Informasi</h3>
-                        <p>Di era sekarang, fokus kita mudah terpecah. Oleh karena itu, penting untuk selalu meluruskan niat dan menyaring apa yang kita konsumsi maupun bagikan.</p>
-                        <h3>2. Langkah Nyata Konsistensi</h3>
-                        <ul>
-                            <li>Menentukan target harian yang realistis.</li>
-                            <li>Saling mengingatkan dalam komunitas positif.</li>
-                            <li>Memanfaatkan teknologi untuk menyebarkan nilai kebaikan.</li>
-                        </ul>
-                        <p>Semoga kita senantiasa diberikan keteguhan hati untuk terus melangkah di jalan kebaikan ini.</p>
-                    `;
-                } else if (category === 'script') {
-                    generatedTitle = "Script Video/Podcast: Rahasia Pembelajaran Efektif";
-                    generatedContent = `
-                        <h2><strong>[SCRIPT VIDEO / PODCAST]</strong></h2>
-                        ${bookReferenceNote}
-                        <p><strong>TOPIK:</strong> ${ref}</p>
-                        <p><strong>TONE:</strong> ${tone.toUpperCase()} | <strong>TARGET:</strong> ${audience.toUpperCase()}</p>
-                        <hr class="my-3"/>
-                        <p><strong>[00:00 - INTRO HOOK]</strong></p>
-                        <p>"Pernah gak sih merasa udah belajar seharian tapi ga ada yang nempel? Nah, di video kali ini kita bakal bedah cara cerdas belajar cepat!"</p>
-                        <p><strong>[00:45 - ISI UTAMA]</strong></p>
-                        <p>Pertama, fokus pada pemahaman konsep bukan sekadar menghafal. Berdasarkan referensi utama: <em>"${ref}"</em>, otak kita lebih mudah mengingat struktur cerita daripada fakta mentah.</p>
-                        <p><strong>[02:30 - POINT BREAKDOWN]</strong></p>
-                        <ul>
-                            <li>Teknik Pomodoro (25 menit fokus, 5 menit istirahat).</li>
-                            <li>Gunakan visualisasi dan penjelasan sederhana.</li>
-                        </ul>
-                    `;
+            prompt += `\n\nFormat output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, <blockquote>, tanpa markdown \`\`\`html).`;
+
+            try {
+                let response;
+                if (apiKey) {
+                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
                 } else {
-                    // Default Artikel / Sosmed / Buletin
-                    generatedTitle = "Panduan Praktis Mengembangkan Potensi Diri secara Optimal";
-                    generatedContent = `
-                        <h2><strong>Panduan Praktis Mengembangkan Potensi Diri</strong></h2>
-                        ${bookReferenceNote}
-                        <p>Dalam dunia yang berkembang pesat, kemampuan untuk beradaptasi dan belajar secara konsisten adalah kunci utama keberhasilan bagi <strong>${audience}</strong>.</p>
-                        <p>Berdasarkan referensi utama yang kita bahas: <em>"${ref}"</em>, terdapat beberapa strategi mendasar yang dapat langsung diterapkan dalam rutinitas harian.</p>
-                        <h3>Mengapa Hal Ini Penting?</h3>
-                        <p>Gaya pendekatan yang <strong>${tone}</strong> membantu kita memahami bahwa perubahan besar selalu dimulai dari langkah-langkah kecil yang disiplin.</p>
-                        <h3>Langkah Strategis:</h3>
-                        <ul>
-                            <li><strong>Evaluasi Rutinitas:</strong> Identifikasi area yang membutuhkan perbaikan.</li>
-                            <li><strong>Fokus Kata Kunci:</strong> ${keywords ? keywords : 'Produktivitas, Fokus, Pengembangan Diri'}.</li>
-                            <li><strong>Eksekusi Bertahap:</strong> Hindari beban kerja berlebih dalam satu waktu.</li>
-                        </ul>
-                    `;
+                    response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt })
+                    });
                 }
 
-                if (cta === 'yes') {
-                    generatedContent += `
-                        <blockquote class="p-3 my-4 border-l-4 border-sky-500 bg-sky-50 dark:bg-sky-950/30 text-sky-900 dark:text-sky-200 rounded-r-lg">
-                            <strong>📢 Call to Action:</strong> Bagaimana pendapat Anda mengenai topik ini? Mari berdiskusi di kolom komentar!
-                        </blockquote>
-                    `;
+                const rawText = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (parseErr) {
+                    throw new Error(`Server mengembalikan status ${response.status}: ${rawText.slice(0, 120)}`);
                 }
 
-                // Otomatis bungkus konten ke dalam container semantik <article>
-                const wrappedContent = `
-<article class="article-content space-y-4">
-${generatedContent.trim()}
-</article>`.trim();
+                if (!response.ok) {
+                    throw new Error(data.error?.message || data.error || `HTTP ${response.status}`);
+                }
 
-                // Update UI Title and Content
-                document.getElementById('docTitle').value = generatedTitle;
-                editor.innerHTML = wrappedContent;
-                updateStats();
+                if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                    let resultHTML = data.candidates[0].content.parts[0].text;
+                    resultHTML = resultHTML.replace(/```html|```/g, '').trim();
+                    editor.innerHTML = `<article class="article-content space-y-4">${bookReferenceNote}${resultHTML}</article>`;
+                    if (language === 'ar') {
+                        editor.setAttribute('dir', 'rtl');
+                    } else {
+                        editor.setAttribute('dir', 'ltr');
+                    }
+                    updateStats();
+                    showToast('Draft berhasil dibuat oleh Gemini AI!', 'fa-circle-check');
 
-                // Reset Button
+                    if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                    }
+                } else {
+                    throw new Error('Respon Gemini kosong atau format tidak sesuai.');
+                }
+            } catch (err) {
+                console.error('Gemini API Error:', err);
+                showToast('Gagal memproses AI: ' + (err.message || 'Terjadi kesalahan'), 'fa-triangle-exclamation');
+            } finally {
                 btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Draft</span>`;
                 btn.disabled = false;
-
-                // Close mobile sidebar if open
-                if (window.innerWidth < 1024) {
-                    toggleSidebar();
-                }
-
-                showToast('Draft konten berhasil dibuat!');
-            }, 600);
+            }
         }
 
         // --- Export Dropdown Toggle ---
