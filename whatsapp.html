@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Kontak WhatsApp - Content Maker Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                <i class="fa-brands fa-whatsapp text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-900 dark:text-white leading-tight text-base sm:text-lg">Database <span class="text-emerald-500 font-normal">WhatsApp Leads</span></h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Kontak pengunjung yang terdaftar dari portal</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+            <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Lihat Portal</span>
+            </a>
+            <button onclick="exportToCSV()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition">
+                <i class="fa-solid fa-file-csv"></i>
+                <span class="hidden sm:inline">Export CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+        
+        <!-- Summary Statistics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Kontak Masuk</span>
+                    <h3 id="statTotalLeads" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-500 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Terdaftar Hari Ini</span>
+                    <h3 id="statTodayLeads" class="text-2xl sm:text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-500 flex items-center justify-center text-xl">
+                    <i class="fa-regular fa-calendar-check"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Sinkronisasi</span>
+                    <h3 id="statSyncStatus" class="text-sm font-bold text-slate-700 dark:text-slate-300 mt-1">Aktif</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Toolbar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="relative w-full sm:max-w-md">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari berdasarkan nama atau no WhatsApp..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+            </div>
+            <button onclick="fetchLeads()" class="self-end sm:self-auto px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Segarkan Data</span>
+            </button>
+        </div>
+
+        <!-- Leads Table Card -->
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
+                            <th class="py-3.5 px-4 w-12 text-center">No</th>
+                            <th class="py-3.5 px-4">Nama Lengkap</th>
+                            <th class="py-3.5 px-4">Nomor WhatsApp</th>
+                            <th class="py-3.5 px-4">Waktu Terdaftar</th>
+                            <th class="py-3.5 px-4 text-center">Aksi Langsung</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyLeadsState" class="hidden text-center py-12 space-y-2 p-6">
+                <i class="fa-solid fa-address-book text-4xl text-slate-300 dark:text-slate-700"></i>
+                <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm">Belum Ada Kontak Masuk</h4>
+                <p class="text-xs text-slate-400">Kontak pengunjung akan otomatis muncul di tabel ini saat mereka mengisi formulir di portal.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Supabase Config ---
+        const SUPABASE_URL = 'https://rpsrkyjlrwlvepyjtegb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_I9AFkQbjLJp_zjFKEOhjZg_xySjYzZt';
+        const supabaseClient = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        let allLeads = [];
+        let searchQuery = '';
+
+        window.onload = function() {
+            fetchLeads();
+        };
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        async function fetchLeads() {
+            let remoteLeads = [];
+            const syncStatusEl = document.getElementById('statSyncStatus');
+
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('whatsapp_leads')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (!error && data) {
+                        remoteLeads = data.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            phone: item.phone,
+                            created_at: item.created_at,
+                            date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', {
+                                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                            }) : '-'
+                        }));
+                        if (syncStatusEl) syncStatusEl.innerText = 'Supabase Cloud';
+                    }
+                } catch (err) {
+                    console.warn('Gagal ambil data Supabase:', err);
+                    if (syncStatusEl) syncStatusEl.innerText = 'Penyimpanan Lokal';
+                }
+            }
+
+            const localLeads = JSON.parse(localStorage.getItem('whatsapp_leads') || '[]');
+            // Gabungkan data unik berdasarkan nomor telepon
+            const merged = [...remoteLeads];
+            localLeads.forEach(loc => {
+                if (!merged.some(m => String(m.phone) === String(loc.phone))) {
+                    merged.push(loc);
+                }
+            });
+
+            allLeads = merged;
+            renderLeads();
+            updateStats();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase().trim();
+            renderLeads();
+        }
+
+        function renderLeads() {
+            const tbody = document.getElementById('leadsTableBody');
+            const empty = document.getElementById('emptyLeadsState');
+
+            const filtered = allLeads.filter(lead => {
+                return !searchQuery || 
+                    lead.name.toLowerCase().includes(searchQuery) || 
+                    lead.phone.includes(searchQuery);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            tbody.innerHTML = filtered.map((lead, idx) => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition">
+                    <td class="py-3 px-4 text-center font-mono text-slate-400 text-xs">${idx + 1}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-900 dark:text-white">${lead.name}</td>
+                    <td class="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-400 font-medium">+${lead.phone}</td>
+                    <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs font-mono">${lead.date || '-'}</td>
+                    <td class="py-3 px-4 text-center">
+                        <a href="https://wa.me/${lead.phone}?text=Halo%20${encodeURIComponent(lead.name)},%20terima%20kasih%20telah%20mengunjungi%20portal%20konten%20kami!" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 font-medium text-xs transition">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>Hubungi</span>
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalLeads').innerText = allLeads.length;
+            
+            // Hitung leads hari ini
+            const today = new Date().toDateString();
+            const todayCount = allLeads.filter(l => {
+                if (!l.created_at) return false;
+                return new Date(l.created_at).toDateString() === today;
+            }).length;
+            document.getElementById('statTodayLeads').innerText = todayCount;
+        }
+
+        function exportToCSV() {
+            if (allLeads.length === 0) {
+                alert('Belum ada data untuk diexport!');
+                return;
+            }
+
+            let csv = 'No,Nama Lengkap,Nomor WhatsApp,Waktu Terdaftar\n';
+            allLeads.forEach((lead, i) => {
+                csv += `"${i + 1}","${lead.name.replace(/"/g, '""')}","'+${lead.phone}","${lead.date || '-'}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `leads-whatsapp-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

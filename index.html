@@ -104,6 +104,9 @@
                 <i class="fa-regular fa-bookmark"></i>
                 <span id="bookmarkBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500"></span>
             </button>
+            <a href="whatsapp.html" class="p-2.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition" title="Database WhatsApp">
+                <i class="fa-brands fa-whatsapp text-lg"></i>
+            </a>
             <a href="dashboard.html" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-xl hover:from-sky-600 hover:to-indigo-700 shadow-md shadow-sky-500/20 transition">
                 <i class="fa-solid fa-plus"></i>
                 <span class="hidden sm:inline">Buka Editor Studio</span>
@@ -318,6 +321,50 @@
         </div>
     </div>
 
+    <!-- Lead Gatekeeper Modal (Syarat Masuk WhatsApp) -->
+    <div id="leadGateModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
+            
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-emerald-500/20 text-2xl">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">Selamat Datang di Portal</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    Silakan masukkan nama dan nomor WhatsApp Anda untuk membuka akses penuh ke seluruh artikel dan koleksi konten.
+                </p>
+            </div>
+
+            <form id="leadGateForm" onsubmit="handleLeadSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="leadNameInput" required placeholder="Contoh: Budi Santoso" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nomor WhatsApp</label>
+                    <div class="relative">
+                        <i class="fa-brands fa-whatsapp absolute left-3.5 top-3 text-emerald-500 text-base"></i>
+                        <input type="tel" id="leadPhoneInput" required placeholder="Contoh: 081234567890" pattern="^(\+62|62|0)[0-9]{8,15}$" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition text-slate-900 dark:text-white font-mono">
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Format: diawali 08... atau 62...</span>
+                </div>
+
+                <button type="submit" id="btnSubmitLead" class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition">
+                    <span>Buka Akses Artikel</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <p class="text-[10px] text-center text-slate-400 leading-relaxed">
+                    Data Anda tersimpan dengan aman dan hanya digunakan untuk keperluan informasi konten terbaru.
+                </p>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50 text-xs font-medium">
         <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
@@ -477,6 +524,9 @@
 
         // --- Initialization ---
         window.onload = async function() {
+            // Cek apakah pengguna sudah mengisi formulir WhatsApp
+            checkLeadAccess();
+
             await fetchArticles();
             updateStats();
             updateBookmarkBadge();
@@ -488,6 +538,78 @@
                 openModal(articleParam);
             }
         };
+
+        // --- Lead Gatekeeper Verification ---
+        function checkLeadAccess() {
+            const savedLead = localStorage.getItem('portal_user_lead');
+            const modal = document.getElementById('leadGateModal');
+            if (!savedLead) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        async function handleLeadSubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById('leadNameInput').value.trim();
+            let phone = document.getElementById('leadPhoneInput').value.trim();
+            const btn = document.getElementById('btnSubmitLead');
+
+            if (!name || !phone) return;
+
+            // Normalisasi nomor telepon ke format internasional (misal 0812 -> 62812)
+            phone = phone.replace(/[^0-9]/g, '');
+            if (phone.startsWith('0')) {
+                phone = '62' + phone.substring(1);
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan data...</span>`;
+
+            const leadData = {
+                name: name,
+                phone: phone,
+                created_at: new Date().toISOString()
+            };
+
+            // Simpan ke Supabase jika client aktif
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('whatsapp_leads')
+                        .insert([{ name: leadData.name, phone: leadData.phone }]);
+                    
+                    if (error) console.warn('Supabase lead insert warning:', error);
+                } catch (err) {
+                    console.warn('Gagal konek Supabase, menyimpan lokal:', err);
+                }
+            }
+
+            // Simpan cadangan ke localStorage
+            try {
+                let leadsList = JSON.parse(localStorage.getItem('whatsapp_leads') || '[]');
+                leadsList.unshift({
+                    id: Date.now(),
+                    ...leadData,
+                    date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                });
+                localStorage.setItem('whatsapp_leads', JSON.stringify(leadsList));
+            } catch (e) {
+                console.error(e);
+            }
+
+            // Simpan status bahwa user ini sudah memasukkan data
+            localStorage.setItem('portal_user_lead', JSON.stringify({ name, phone }));
+
+            showToast(`Selamat datang, ${name}! Akses dibuka.`);
+            document.getElementById('leadGateModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            btn.disabled = false;
+            btn.innerHTML = `<span>Buka Akses Artikel</span><i class="fa-solid fa-arrow-right"></i>`;
+        }
 
         // --- Dark Mode Toggle ---
         function toggleDarkMode() {
