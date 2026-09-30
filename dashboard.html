@@ -147,6 +147,12 @@
             <!-- Form Options (Scrollable) -->
             <div class="flex-1 overflow-y-auto p-4 space-y-5">
 
+                <!-- Judul Konten -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Judul Konten</label>
+                    <input type="text" id="paramTitle" placeholder="Contoh: Strategi Efektif Belajar Digital..." oninput="syncTitleToEditor(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
+                </div>
+
                 <!-- 1. Kategori Konten -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Kategori Konten</label>
@@ -305,7 +311,7 @@
                 
                 <!-- Document Title Editable -->
                 <div class="flex items-center justify-between gap-4">
-                    <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
+                    <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" oninput="syncTitleToSidebar(this.value)" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
                     
                     <div class="flex items-center gap-2 shrink-0">
                         <button id="btnTranslateEnglish" onclick="translateCurrentContentToEnglish()" class="text-xs px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 font-medium transition flex items-center gap-1.5" title="Terjemahkan judul dan konten ke Bahasa Inggris menggunakan Gemini AI">
@@ -413,6 +419,17 @@
         function toggleSidebar() {
             sidebar.classList.toggle('-translate-x-full');
             sidebarBackdrop.classList.toggle('hidden');
+        }
+
+        // --- Two-way Title Synchronization ---
+        function syncTitleToEditor(val) {
+            const docTitle = document.getElementById('docTitle');
+            if (docTitle) docTitle.value = val || 'Draft Konten Tanpa Judul';
+        }
+
+        function syncTitleToSidebar(val) {
+            const paramTitle = document.getElementById('paramTitle');
+            if (paramTitle) paramTitle.value = val;
         }
 
         // --- Format Controls ---
@@ -692,6 +709,8 @@
 
             if (article) {
                 document.getElementById('docTitle').value = article.title || '';
+                const paramTitle = document.getElementById('paramTitle');
+                if (paramTitle) paramTitle.value = article.title || '';
                 editor.innerHTML = article.content || '';
                 if (article.category) {
                     const catSelect = document.getElementById('paramCategory');
@@ -857,7 +876,11 @@ ${editor.innerHTML}`;
                 const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanedJSON);
 
-                if (parsed.translatedTitle) document.getElementById('docTitle').value = parsed.translatedTitle;
+                if (parsed.translatedTitle) {
+                    document.getElementById('docTitle').value = parsed.translatedTitle;
+                    const paramTitle = document.getElementById('paramTitle');
+                    if (paramTitle) paramTitle.value = parsed.translatedTitle;
+                }
                 if (parsed.translatedHtml) {
                     editor.innerHTML = parsed.translatedHtml;
                     editor.setAttribute('dir', 'rtl');
@@ -940,7 +963,11 @@ ${editor.innerHTML}`;
                 const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanedJSON);
 
-                if (parsed.translatedTitle) document.getElementById('docTitle').value = parsed.translatedTitle;
+                if (parsed.translatedTitle) {
+                    document.getElementById('docTitle').value = parsed.translatedTitle;
+                    const paramTitle = document.getElementById('paramTitle');
+                    if (paramTitle) paramTitle.value = parsed.translatedTitle;
+                }
                 if (parsed.translatedHtml) {
                     editor.innerHTML = parsed.translatedHtml;
                     editor.setAttribute('dir', 'ltr');
@@ -960,6 +987,9 @@ ${editor.innerHTML}`;
 
         // --- Reset Sidebar Parameters ---
         function resetParameters() {
+            const paramTitle = document.getElementById('paramTitle');
+            if (paramTitle) paramTitle.value = '';
+            document.getElementById('docTitle').value = 'Draft Konten Tanpa Judul';
             document.getElementById('paramCategory').value = 'artikel';
             document.getElementById('paramLength').value = 500;
             updateLengthLabel(500);
@@ -975,11 +1005,12 @@ ${editor.innerHTML}`;
         // --- Smart Content Generator Simulation ---
         async function generateDraft() {
             const btn = document.getElementById('btnGenerate');
+            const paramTitleVal = document.getElementById('paramTitle') ? document.getElementById('paramTitle').value.trim() : '';
             const category = document.getElementById('paramCategory').value;
             const length = document.getElementById('paramLength').value;
             const tone = document.querySelector('input[name="paramTone"]:checked').value;
             const audience = document.getElementById('paramAudience').value;
-            const ref = document.getElementById('paramReference').value || 'Pentingnya Konsistensi dan Pembelajaran Berkelanjutan';
+            const ref = document.getElementById('paramReference').value || paramTitleVal || 'Pentingnya Konsistensi dan Pembelajaran Berkelanjutan';
             const keywords = document.getElementById('paramKeywords').value;
             const language = document.getElementById('paramLanguage').value;
             const cta = document.getElementById('paramCTA').value;
@@ -1015,6 +1046,7 @@ ${editor.innerHTML}`;
 
             const targetLang = language === 'ar' ? 'Arab (Fusha/Modern Standard Arabic)' : (language === 'en' ? 'Inggris' : 'Indonesia');
             let prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
+JUDUL: ${paramTitleVal || 'Buatlah judul yang menarik dan relevan'}
 TOPIK: ${ref}
 KATA KUNCI: ${keywords || '-'}`;
 
