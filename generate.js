@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
     try {
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -26,13 +26,7 @@ export default async function handler(req, res) {
         );
 
         const data = await response.json();
-        if (!response.ok) {
-            return res.status(response.status).json({
-                error: data.error?.message || 'Gagal memproses request dari Gemini API'
-            });
-        }
-
-        return res.status(200).json(data);
+        return res.status(response.status).json(data);
     } catch (err) {
         return res.status(500).json({
             error: err.message || 'Terjadi kesalahan internal pada server'

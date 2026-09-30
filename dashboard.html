@@ -76,9 +76,9 @@
                 <i class="fa-solid fa-arrow-left"></i>
                 <span class="hidden sm:inline">Lihat Portal</span>
             </a>
-            <a href="whatsapp.html" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Database WhatsApp Leads">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
-                <span class="hidden sm:inline">WhatsApp Leads</span>
+            <a href="whatsapp.html" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition" title="Database WhatsApp Leads">
+                <i class="fa-brands fa-whatsapp text-base"></i>
+                <span class="hidden sm:inline">Kontak WA</span>
             </a>
             <button id="btnPublish" onclick="publishToPortal()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition" title="Publikasikan Artikel ke Portal Utama">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -831,9 +831,6 @@ ${innerHTML.trim()}
                 ? retrieved.map((r, i) => `[Sumber ${i+1}: ${r.bookName}]\n${r.chunk}`).join('\n\n')
                 : (bookExcerpt ? `[Sumber: ${activeBooks[0]?.name}]\n${bookExcerpt}` : '');
 
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menganalisis RAG...</span>`;
-            btn.disabled = true;
-
             const bookReferenceNote = activeBooks.length > 0 
                 ? `<p class="text-xs text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/60 p-2.5 rounded-lg border border-sky-100 dark:border-sky-900/50 mb-3"><strong>📚 Rujukan Dokumen:</strong> ${activeBooks.map(b => b.name).join(', ')}${bookExcerpt ? `<br/><span class="italic text-slate-600 dark:text-slate-300 mt-1 block">"${bookExcerpt}"</span>` : ''}</p>` 
                 : '';
@@ -874,7 +871,18 @@ Format output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, tanpa 
                         });
                     }
 
-                    const data = await response.json();
+                    const rawText = await response.text();
+                    let data;
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (parseErr) {
+                        throw new Error(`Server mengembalikan status ${response.status} (bukan JSON): ${rawText.slice(0, 100)}`);
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || data.error || `HTTP ${response.status}`);
+                    }
+
                     if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
                         let resultHTML = data.candidates[0].content.parts[0].text;
                         resultHTML = resultHTML.replace(/```html|```/g, '').trim();
@@ -959,6 +967,7 @@ Format output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, tanpa 
                             <strong>📢 Call to Action:</strong> Bagaimana pendapat Anda mengenai topik ini? Mari berdiskusi di kolom komentar!
                         </blockquote>
                     `;
+                }
                 }
 
                 // Otomatis bungkus konten ke dalam container semantik <article>
