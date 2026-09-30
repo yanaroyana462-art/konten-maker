@@ -268,6 +268,7 @@
                         <select id="paramLanguage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none transition">
                             <option value="id" selected>🇮🇩 Indonesia</option>
                             <option value="en">🇬🇧 Inggris</option>
+                            <option value="ar">🇸🇦 Arab</option>
                         </select>
                     </div>
                     <div>
@@ -307,6 +308,12 @@
                     <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
                     
                     <div class="flex items-center gap-2 shrink-0">
+                        <button id="btnTranslateEnglish" onclick="translateCurrentContentToEnglish()" class="text-xs px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 font-medium transition flex items-center gap-1.5" title="Terjemahkan judul dan konten ke Bahasa Inggris menggunakan Gemini AI">
+                            <i class="fa-solid fa-language text-sm"></i> <span class="hidden sm:inline">Terjemahkan ke</span> EN (AI)
+                        </button>
+                        <button id="btnTranslateArabic" onclick="translateCurrentContentToArabic()" class="text-xs px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 font-medium transition flex items-center gap-1.5" title="Terjemahkan judul dan konten ke Bahasa Arab menggunakan Gemini AI">
+                            <i class="fa-solid fa-language text-sm"></i> <span class="hidden sm:inline">Terjemahkan ke</span> Arab (AI)
+                        </button>
                         <button onclick="quickInsertCTA()" class="text-xs px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-md hover:bg-sky-100 border border-sky-200 dark:border-sky-800 font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-plus text-[10px]"></i> Sisip CTA
                         </button>
@@ -785,6 +792,158 @@ ${innerHTML.trim()}
             showToast('CTA berhasil disisipkan');
         }
 
+        // --- Translate Current Content to Arabic with Gemini AI ---
+        async function translateCurrentContentToArabic() {
+            const rawText = editor.innerText.trim();
+            const currentTitle = document.getElementById('docTitle').value.trim();
+
+            if (!rawText) {
+                showToast('Tidak ada konten di editor untuk diterjemahkan!', 'fa-triangle-exclamation');
+                return;
+            }
+
+            const btn = document.getElementById('btnTranslateArabic');
+            const originalBtnHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menerjemahkan...</span>`;
+            showToast('Menerjemahkan artikel ke bahasa Arab...', 'fa-spinner fa-spin');
+
+            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
+            const prompt = `Anda adalah penerjemah profesional bahasa Arab (Fusha/Modern Standard Arabic).
+Tugas Anda adalah menerjemahkan judul dan konten HTML berikut ke dalam bahasa Arab yang fasih, alami, dan baku.
+
+ATURAN:
+1. Pertahankan semua format struktur HTML (misalnya <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
+2. Terjemahkan judul dan isi konten secara akurat.
+3. Kembalikan HANYA format JSON valid tanpa tanda kutip markdown (\`\`\`json):
+{
+  "translatedTitle": "Judul terjemahan bahasa Arab",
+  "translatedHtml": "Konten HTML lengkap terjemahan bahasa Arab"
+}
+
+Judul Asli:
+${currentTitle}
+
+Konten HTML Asli:
+${editor.innerHTML}`;
+
+            try {
+                let response;
+                if (apiKey) {
+                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                } else {
+                    response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt })
+                    });
+                }
+
+                const data = await response.json();
+                const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResult) throw new Error('Respon Gemini kosong atau tidak valid.');
+
+                const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
+                const parsed = JSON.parse(cleanedJSON);
+
+                if (parsed.translatedTitle) document.getElementById('docTitle').value = parsed.translatedTitle;
+                if (parsed.translatedHtml) {
+                    editor.innerHTML = parsed.translatedHtml;
+                    editor.setAttribute('dir', 'rtl');
+                }
+
+                document.getElementById('paramLanguage').value = 'ar';
+                updateStats();
+                showToast('Konten berhasil diterjemahkan ke Bahasa Arab!', 'fa-circle-check');
+            } catch (err) {
+                console.error('Gagal menerjemahkan via Gemini:', err);
+                showToast('Gagal menerjemahkan konten: ' + (err.message || 'Error'), 'fa-triangle-exclamation');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHTML;
+            }
+        }
+
+        // --- Translate Current Content to English with Gemini AI ---
+        async function translateCurrentContentToEnglish() {
+            const rawText = editor.innerText.trim();
+            const currentTitle = document.getElementById('docTitle').value.trim();
+
+            if (!rawText) {
+                showToast('Tidak ada konten di editor untuk diterjemahkan!', 'fa-triangle-exclamation');
+                return;
+            }
+
+            const btn = document.getElementById('btnTranslateEnglish');
+            const originalBtnHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menerjemahkan...</span>`;
+            showToast('Menerjemahkan artikel ke bahasa Inggris...', 'fa-spinner fa-spin');
+
+            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
+            const prompt = `You are a professional English editor and translator.
+Your task is to translate the following title and HTML content into fluent, natural, and standard English.
+
+RULES:
+1. Strictly preserve all existing HTML structure and tags (such as <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
+2. Translate both title and body accurately.
+3. Return ONLY a valid JSON object without markdown code blocks (\`\`\`json):
+{
+  "translatedTitle": "Translated English Title",
+  "translatedHtml": "Full translated HTML content in English"
+}
+
+Original Title:
+${currentTitle}
+
+Original HTML Content:
+${editor.innerHTML}`;
+
+            try {
+                let response;
+                if (apiKey) {
+                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                } else {
+                    response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt })
+                    });
+                }
+
+                const data = await response.json();
+                const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResult) throw new Error('Respon Gemini kosong atau tidak valid.');
+
+                const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
+                const parsed = JSON.parse(cleanedJSON);
+
+                if (parsed.translatedTitle) document.getElementById('docTitle').value = parsed.translatedTitle;
+                if (parsed.translatedHtml) {
+                    editor.innerHTML = parsed.translatedHtml;
+                    editor.setAttribute('dir', 'ltr');
+                }
+
+                document.getElementById('paramLanguage').value = 'en';
+                updateStats();
+                showToast('Konten berhasil diterjemahkan ke Bahasa Inggris!', 'fa-circle-check');
+            } catch (err) {
+                console.error('Gagal menerjemahkan via Gemini:', err);
+                showToast('Gagal menerjemahkan konten: ' + (err.message || 'Error'), 'fa-triangle-exclamation');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHTML;
+            }
+        }
+
         // --- Reset Sidebar Parameters ---
         function resetParameters() {
             document.getElementById('paramCategory').value = 'artikel';
@@ -842,7 +1001,8 @@ ${innerHTML.trim()}
             // Gunakan Gemini AI (melalui Serverless Function Vercel atau direct API key jika diinput manual)
             if (contextText) {
                 try {
-                    const prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${language === 'id' ? 'Indonesia' : 'Inggris'} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
+                    const targetLang = language === 'ar' ? 'Arab (Fusha/Modern Standard Arabic)' : (language === 'en' ? 'Inggris' : 'Indonesia');
+                    const prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
 
 ATURAN KETAT RAG:
 1. Anda WAJIB mengambil argumen, fakta, dan gagasan utama HANYA dari [KONTEKS BUKU] di bawah ini.
