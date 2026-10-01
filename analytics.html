@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analitik Konten - Content Maker Studio</title>
-    <script src="<https://cdn.tailwindcss.com>"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
-    <link href="<https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap>" rel="stylesheet">
-    <link rel="stylesheet" href="<https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css>">
-    <script src="<https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2>"></script>
-    <script src="<https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js>"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -123,9 +123,23 @@
 
         <!-- Grafik tren -->
         <section class="card p-5">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <h2 class="text-sm font-bold text-slate-900 dark:text-white">Tren tayangan dan postingan baru</h2>
-                <span class="text-[11px] text-slate-400">Batang: tayangan &middot; Garis: pengunjung unik dan postingan terbit (sumbu kanan)</span>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white">Tren tayangan dan postingan baru</h2>
+                    <span class="text-[11px] text-slate-400">Batang: tayangan &middot; Garis: pengunjung unik dan postingan terbit (sumbu kanan)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="trendCategoryFilter" class="text-xs text-slate-500 dark:text-slate-400">Kategori:</label>
+                    <select id="trendCategoryFilter" onchange="onTrendCategoryChange(this.value)" class="text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer">
+                        <option value="all">Semua Kategori</option>
+                        <option value="khutbah">🕌 Khutbah / Tausiyah</option>
+                        <option value="artikel">📰 Artikel / Blog Post</option>
+                        <option value="sosmed">📲 Media Sosial</option>
+                        <option value="script">🎙️ Script Video / Podcast</option>
+                        <option value="newsletter">✉️ Newsletter</option>
+                        <option value="buletin">📄 Buletin / Press Release</option>
+                    </select>
+                </div>
             </div>
             <div class="chart-box"><canvas id="chartTrend"></canvas></div>
         </section>
@@ -244,6 +258,7 @@ let A = [];   // artikel  {id,title,category,tone,created}
 let V = [];   // event    {t,aid,title,cat,type,sid,src,lang}
 let L = [];   // leads    {t}
 let period = localStorage.getItem('analytics_period') || 'day';
+let trendCategory = 'all';
 let demo = false;
 let charts = {};
 let lastRows = [];
@@ -498,13 +513,24 @@ function mk(id, cfg) {
 function renderTrend(R, cur) {
     const n = R.buckets.length;
     const views = Array(n).fill(0), sets = Array.from({ length: n }, () => new Set()), posts = Array(n).fill(0);
+    const amap = new Map(A.map(a => [a.id, a]));
+
     cur.forEach(e => {
         if (e.type !== 'view') return;
+        const eCat = e.cat || amap.get(e.aid)?.category;
+        if (trendCategory !== 'all' && eCat !== trendCategory) return;
         const i = bucketIndex(e.t, R.buckets);
         if (i < 0) return;
         views[i]++; if (e.sid) sets[i].add(e.sid);
     });
-    A.forEach(a => { const i = bucketIndex(a.created, R.buckets); if (i >= 0) posts[i]++; });
+    A.forEach(a => {
+        if (trendCategory !== 'all' && a.category !== trendCategory) return;
+        const i = bucketIndex(a.created, R.buckets);
+        if (i >= 0) posts[i]++;
+    });
+
+    const sel = $('trendCategoryFilter');
+    if (sel && sel.value !== trendCategory) sel.value = trendCategory;
 
     mk('chartTrend', {
         data: {
@@ -525,6 +551,13 @@ function renderTrend(R, cur) {
             }
         }
     });
+}
+
+function onTrendCategoryChange(val) {
+    trendCategory = val;
+    const R = buildRange(period);
+    const cur = within(V, R.start, R.end);
+    renderTrend(R, cur);
 }
 
 // ---------- Top 10 ----------
