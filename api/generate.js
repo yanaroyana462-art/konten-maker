@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     try {
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+       
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         const data = await response.json();
         if (!response.ok && response.status === 404) {
             // Fallback ke model gemini-1.5-flash jika model 2.5 belum aktif
-            const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
