@@ -63,6 +63,9 @@
 </head>
 <body class="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
 
+    <!-- Reading Progress Bar -->
+    <div id="readingProgressBar" class="fixed top-0 left-0 h-1 bg-sky-500 z-50 transition-all duration-150 w-0"></div>
+
     <!-- Navigation Header -->
     <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between transition-colors">
         <div class="flex items-center gap-3">
@@ -274,6 +277,14 @@
                     <button id="btnTTS" onclick="toggleTTS()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Dengarkan pembacaan artikel">
                         <i id="ttsIcon" class="fa-solid fa-volume-high text-sky-500"></i> <span id="t-btnListen">Dengarkan</span>
                     </button>
+                    <button id="btnTTSSpeed" onclick="cycleTTSSpeed()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition font-mono" title="Kecepatan pembacaan suara">
+                        1.0x
+                    </button>
+                    <div class="flex items-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 text-xs text-slate-600 dark:text-slate-300" title="Atur ukuran teks artikel">
+                        <button onclick="adjustFontSize(-1)" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-bold" title="Perkecil huruf">A-</button>
+                        <span class="w-px h-3.5 bg-slate-200 dark:bg-slate-800"></span>
+                        <button onclick="adjustFontSize(1)" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-bold" title="Perbesar huruf">A+</button>
+                    </div>
                     <button onclick="shareArticle()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                         <i class="fa-solid fa-share-nodes"></i> <span id="t-btnShare" class="hidden sm:inline">Bagikan</span>
                     </button>
@@ -441,6 +452,11 @@
         <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
         <span id="toastMsg">Pesan notifikasi</span>
     </div>
+
+    <!-- Floating Scroll To Top Button -->
+    <button id="btnBackToTop" onclick="scrollToTop()" class="fixed bottom-6 right-6 p-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white shadow-2xl transition-all duration-300 z-40 opacity-0 pointer-events-none translate-y-4" title="Kembali ke atas">
+        <i class="fa-solid fa-arrow-up text-sm"></i>
+    </button>
 
     <script>
         // --- Sample Article Data Database ---
@@ -756,6 +772,10 @@
         let isSpeaking = false;
         let ttsItems = [];
         let ttsIndex = 0;
+        const ttsSpeeds = [0.75, 1.0, 1.25, 1.5];
+        let ttsSpeedIndex = 1;
+        const fontSizes = ['15px', '18px', '21px', '24px'];
+        let currentFontSizeIndex = 1;
 
         // --- Session ID & Analytics Tracking Helpers ---
         function getSessionId() {
@@ -852,6 +872,7 @@
             if (articleParam) {
                 openModal(articleParam, 'link');
             }
+            setupScrollListeners();
         };
 
         // --- Language Switcher Handler ---
@@ -1367,6 +1388,8 @@
             stopTTS();
             ttsItems = [];
             ttsIndex = 0;
+            const bar = document.getElementById('readingProgressBar');
+            if (bar) bar.style.width = '0%';
             const listView = document.getElementById('articlesListView');
             const detailView = document.getElementById('articleDetailView');
             if (detailView) detailView.classList.add('hidden');
@@ -1513,6 +1536,52 @@
             }, 2500);
         }
 
+        // --- Reading Enhancements: Scroll, Font Size, & Progress ---
+        function setupScrollListeners() {
+            window.addEventListener('scroll', () => {
+                const btnTop = document.getElementById('btnBackToTop');
+                if (window.scrollY > 300) {
+                    btnTop?.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+                } else {
+                    btnTop?.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+                }
+
+                const detailView = document.getElementById('articleDetailView');
+                const progressBar = document.getElementById('readingProgressBar');
+                if (progressBar && detailView && !detailView.classList.contains('hidden')) {
+                    const offsetTop = detailView.offsetTop;
+                    const totalHeight = detailView.scrollHeight;
+                    const scrolled = window.scrollY - offsetTop;
+                    const pct = Math.min(100, Math.max(0, (scrolled / (totalHeight - window.innerHeight + 120)) * 100));
+                    progressBar.style.width = pct + '%';
+                } else if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+            }, { passive: true });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function adjustFontSize(delta) {
+            currentFontSizeIndex = Math.max(0, Math.min(fontSizes.length - 1, currentFontSizeIndex + delta));
+            const modalBody = document.getElementById('modalBody');
+            if (modalBody) {
+                modalBody.style.fontSize = fontSizes[currentFontSizeIndex];
+                modalBody.style.lineHeight = '1.85';
+            }
+        }
+
+        function cycleTTSSpeed() {
+            ttsSpeedIndex = (ttsSpeedIndex + 1) % ttsSpeeds.length;
+            const speed = ttsSpeeds[ttsSpeedIndex];
+            const btn = document.getElementById('btnTTSSpeed');
+            if (btn) btn.innerText = `${speed}x`;
+            showToast(`Kecepatan suara: ${speed}x`, 'fa-gauge-high');
+            if (isSpeaking) playTTSItem(ttsIndex);
+        }
+
         // --- Text-to-Speech (TTS) System ---
         function stopTTS() {
             isSpeaking = false;
@@ -1633,7 +1702,7 @@
 
             const utterance = new SpeechSynthesisUtterance(item.text);
             utterance.lang = targetLangCode;
-            utterance.rate = currentLang === 'ar' ? 0.9 : 1.0;
+            utterance.rate = (currentLang === 'ar' ? 0.9 : 1.0) * ttsSpeeds[ttsSpeedIndex];
 
             const voices = window.speechSynthesis.getVoices();
             if (voices.length > 0) {
