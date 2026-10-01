@@ -102,6 +102,17 @@
                 <i class="fa-regular fa-bookmark"></i>
                 <span id="bookmarkBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500"></span>
             </button>
+
+            <!-- User Profile & Logout Button -->
+            <div id="userProfileBadge" class="hidden flex items-center gap-1.5 sm:gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    <i class="fa-solid fa-circle-user text-emerald-500 text-sm"></i>
+                    <span id="displayUserName" class="max-w-[90px] sm:max-w-[140px] truncate"></span>
+                </div>
+                <button onclick="handleLogout()" class="p-2 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition" title="Keluar / Ganti Akun">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -829,12 +840,25 @@
         function checkLeadAccess() {
             const savedLead = localStorage.getItem('portal_user_lead');
             const modal = document.getElementById('leadGateModal');
+            const profileBadge = document.getElementById('userProfileBadge');
+            const nameDisplay = document.getElementById('displayUserName');
+
             if (!savedLead) {
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
+                if (profileBadge) profileBadge.classList.add('hidden');
             } else {
                 modal.classList.add('hidden');
                 document.body.style.overflow = '';
+                if (profileBadge) profileBadge.classList.remove('hidden');
+                try {
+                    const parsed = JSON.parse(savedLead);
+                    if (nameDisplay) {
+                        nameDisplay.innerText = parsed.name || 'Pengguna';
+                    }
+                } catch (e) {
+                    if (nameDisplay) nameDisplay.innerText = 'Pengguna';
+                }
             }
         }
 
@@ -895,11 +919,19 @@
             // Simpan status bahwa user ini sudah memasukkan data
             localStorage.setItem('portal_user_lead', JSON.stringify({ name, phone, email }));
 
+            checkLeadAccess();
             showToast(`Selamat datang, ${name}! Akses dibuka.`);
-            document.getElementById('leadGateModal').classList.add('hidden');
-            document.body.style.overflow = '';
             btn.disabled = false;
             btn.innerHTML = `<span>Buka Akses Artikel</span><i class="fa-solid fa-arrow-right"></i>`;
+        }
+
+        // --- Logout Handler ---
+        function handleLogout() {
+            if (confirm('Apakah Anda yakin ingin keluar? Formulir pendaftaran akan muncul kembali untuk membuka akses artikel.')) {
+                localStorage.removeItem('portal_user_lead');
+                checkLeadAccess();
+                showToast('Anda telah keluar.', 'fa-arrow-right-from-bracket');
+            }
         }
 
         // --- Dark Mode Toggle ---
