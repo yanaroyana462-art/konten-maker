@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analitik Konten - Content Maker Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; }
+        .dark .card { background: #020617; border-color: #1e293b; }
+        .chart-box { position: relative; height: 18rem; }
+        .chart-box.sm { height: 13rem; }
+        .up { color: #059669; background: #ecfdf5; }
+        .down { color: #e11d48; background: #fff1f2; }
+        .flat { color: #64748b; background: #f1f5f9; }
+        .dark .up { color: #34d399; background: rgba(16,185,129,.12); }
+        .dark .down { color: #fb7185; background: rgba(244,63,94,.12); }
+        .dark .flat { color: #94a3b8; background: rgba(148,163,184,.12); }
+    </style>
+</head>
+<body class="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+                <i class="fa-solid fa-chart-column text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-900 dark:text-white leading-tight text-base sm:text-lg">Analitik <span class="text-sky-500 font-normal">Konten</span></h1>
+                <p id="dataSourceLabel" class="text-[11px] text-slate-500 dark:text-slate-400">Memuat data...</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Ubah tema">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+            <button id="btnIgnoreMe" onclick="toggleIgnoreMe()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Kunjungan dari browser ini tidak ikut dihitung">
+                <i class="fa-solid fa-eye-slash"></i><span class="hidden md:inline">Abaikan kunjungan saya</span>
+            </button>
+            <button id="btnDemo" onclick="toggleDemo()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/40 transition" title="Lihat tampilan dengan data contoh">
+                <i class="fa-solid fa-flask"></i><span class="hidden md:inline">Data contoh</span>
+            </button>
+            <button onclick="loadData()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-rotate"></i><span class="hidden md:inline">Segarkan</span>
+            </button>
+            <button onclick="exportCSV()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-sky-600 text-white rounded-lg hover:bg-sky-700 shadow-sm transition">
+                <i class="fa-solid fa-file-csv"></i><span class="hidden md:inline">Export CSV</span>
+            </button>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+            <a href="dashboard.html" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-arrow-left"></i><span>Dashboard</span>
+            </a>
+            <a href="index.html" class="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-layer-group"></i><span>Portal</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 space-y-6">
+
+        <!-- Banner: tabel belum dibuat -->
+        <div id="setupBanner" class="hidden card border-amber-300 dark:border-amber-700 p-5 space-y-3">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5"></i>
+                <div class="space-y-1">
+                    <h2 class="font-bold text-sm text-slate-900 dark:text-white">Data tayangan belum bisa dibaca</h2>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Tabel <span class="font-mono">article_views</span> belum ada di Supabase, atau izin bacanya belum diatur.
+                        Jalankan SQL di bawah lewat Supabase &rsaquo; SQL Editor, lalu tempel kode pelacakan di <span class="font-mono">index.html</span> (lihat <span class="font-mono">patch-integrasi.md</span>).
+                        Sambil menunggu data masuk, tombol "Data contoh" menampilkan gambaran halaman ini.
+                    </p>
+                    <p id="setupError" class="text-[11px] font-mono text-rose-500"></p>
+                </div>
+            </div>
+            <button onclick="copySQL()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition flex items-center gap-1.5">
+                <i class="fa-regular fa-copy"></i> Salin SQL
+            </button>
+        </div>
+
+        <!-- Ringkasan hari ini / minggu ini / bulan ini -->
+        <section>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Ringkasan saat ini</h2>
+            <div id="snapshotCards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- Pemilih periode -->
+        <section class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div>
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white">Analisa periode</h2>
+                <p id="rangeLabel" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+            </div>
+            <div id="periodTabs" class="inline-flex p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-xs font-semibold">
+                <button data-p="day" onclick="setPeriod('day')" class="px-4 py-2 rounded-lg transition">Harian</button>
+                <button data-p="week" onclick="setPeriod('week')" class="px-4 py-2 rounded-lg transition">Mingguan</button>
+                <button data-p="month" onclick="setPeriod('month')" class="px-4 py-2 rounded-lg transition">Bulanan</button>
+            </div>
+        </section>
+
+        <!-- KPI periode terpilih -->
+        <section id="kpiCards" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"></section>
+
+        <!-- Insight otomatis -->
+        <section id="insightBox" class="card p-5">
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-amber-500"></i> Temuan utama</h2>
+            <ul id="insightList" class="space-y-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed"></ul>
+        </section>
+
+        <!-- Grafik tren -->
+        <section class="card p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white">Tren tayangan dan postingan baru</h2>
+                <span class="text-[11px] text-slate-400">Batang: tayangan &middot; Garis: pengunjung unik dan postingan terbit (sumbu kanan)</span>
+            </div>
+            <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+        </section>
+
+        <!-- Top 10 + Kategori -->
+        <section class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+            <div class="card p-5 xl:col-span-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white">10 postingan paling sering dibuka</h2>
+                    <span class="text-[11px] text-slate-400">Klik untuk membuka artikel</span>
+                </div>
+                <ol id="topList" class="space-y-3"></ol>
+            </div>
+
+            <div class="card p-5 xl:col-span-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-4">Kategori yang paling banyak dibuka</h2>
+                <div class="chart-box sm"><canvas id="chartCategory"></canvas></div>
+                <div id="categoryTable" class="mt-4 space-y-2 text-xs"></div>
+            </div>
+        </section>
+
+        <!-- Kapan pembaca aktif -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card p-5 lg:col-span-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Jam pembaca paling aktif</h2>
+                <p class="text-[11px] text-slate-400 mb-3">Berdasarkan waktu setempat di browser Anda</p>
+                <div class="chart-box sm"><canvas id="chartHour"></canvas></div>
+            </div>
+            <div class="card p-5">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Hari paling ramai</h2>
+                <p class="text-[11px] text-slate-400 mb-3">Total tayangan per hari dalam seminggu</p>
+                <div class="chart-box sm"><canvas id="chartWeekday"></canvas></div>
+            </div>
+        </section>
+
+        <!-- Konversi + sumber + tone -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card p-5">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Pendaftar WhatsApp baru</h2>
+                <p id="leadSummary" class="text-[11px] text-slate-400 mb-3"></p>
+                <div class="chart-box sm"><canvas id="chartLeads"></canvas></div>
+            </div>
+            <div class="card p-5 space-y-5">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Dari mana pembaca datang</h2>
+                    <div id="sourceBars" class="space-y-2.5 text-xs"></div>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Bahasa yang dipilih pembaca</h2>
+                    <div id="langBars" class="space-y-2.5 text-xs"></div>
+                </div>
+            </div>
+            <div class="card p-5">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Gaya bahasa yang paling efektif</h2>
+                <p class="text-[11px] text-slate-400 mb-3">Rata-rata tayangan per postingan</p>
+                <div id="toneBars" class="space-y-2.5 text-xs"></div>
+            </div>
+        </section>
+
+        <!-- Postingan sepi -->
+        <section class="card p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white">Postingan belum dibuka pada periode ini</h2>
+                <span class="text-[11px] text-slate-400">Pertimbangkan untuk dibagikan ulang, diganti judulnya, atau digabung ke artikel lain</span>
+            </div>
+            <div id="zeroList" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs"></div>
+        </section>
+    </main>
+
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg" class="text-sm font-medium"></span>
+    </div>
+
+<script>
+// ======================= Konfigurasi =======================
+const SUPABASE_URL = 'https://rpsrkyjlrwlvepyjtegb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_I9AFkQbjLJp_zjFKEOhjZg_xySjYzZt';
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const SETUP_SQL = `create table if not exists public.article_views (
+  id bigint generated always as identity primary key,
+  article_id text not null,
+  article_title text,
+  category text,
+  event_type text not null default 'view' check (event_type in ('view','share','print','bookmark')),
+  session_id text,
+  source text default 'portal',
+  lang text,
+  created_at timestamptz not null default now()
+);
+create index if not exists article_views_created_idx on public.article_views (created_at desc);
+create index if not exists article_views_article_idx on public.article_views (article_id, created_at desc);
+alter table public.article_views enable row level security;
+drop policy if exists "anon insert views" on public.article_views;
+create policy "anon insert views" on public.article_views for insert to anon with check (true);
+drop policy if exists "anon read views" on public.article_views;
+create policy "anon read views" on public.article_views for select to anon using (true);`;
+
+const CAT = {
+    khutbah:    { label: 'Khutbah / Tausiyah',    emoji: '🕌', color: '#10b981' },
+    artikel:    { label: 'Artikel / Blog Post',   emoji: '📰', color: '#0284c7' },
+    sosmed:     { label: 'Media Sosial',          emoji: '📲', color: '#ec4899' },
+    script:     { label: 'Script Video / Podcast', emoji: '🎙️', color: '#f59e0b' },
+    newsletter: { label: 'Newsletter',            emoji: '✉️', color: '#8b5cf6' },
+    buletin:    { label: 'Buletin / Press Release', emoji: '📄', color: '#64748b' }
+};
+const catInfo = c => CAT[c] || { label: c || 'Lainnya', emoji: '📁', color: '#94a3b8' };
+const TONE_LABEL = { santai: 'Santai', formal: 'Formal', profesional: 'Profesional', persuasif: 'Persuasif', inspiratif: 'Inspiratif', akademis: 'Akademis' };
+const LANG_LABEL = { id: 'Indonesia', en: 'Inggris', ar: 'Arab' };
+const SOURCE_LABEL = { portal: 'Menjelajah dari portal', link: 'Tautan yang dibagikan' };
+const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+// ======================= State =======================
+let A = [];   // artikel  {id,title,category,tone,created}
+let V = [];   // event    {t,aid,title,cat,type,sid,src,lang}
+let L = [];   // leads    {t}
+let period = localStorage.getItem('analytics_period') || 'day';
+let demo = false;
+let charts = {};
+let lastRows = [];
+
+// ======================= Helper umum =======================
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => new Intl.NumberFormat('id-ID').format(Math.round(n * 10) / 10);
+const isDark = () => document.documentElement.classList.contains('dark');
+
+const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const startOfWeek = d => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const startOfMonth = d => { const x = startOfDay(d); x.setDate(1); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addMonths = (d, n) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
+
+function showToast(msg, icon = 'fa-circle-check') {
+    $('toastMsg').innerText = msg;
+    $('toastIcon').className = `fa-solid ${icon} text-emerald-400 dark:text-emerald-600`;
+    $('toast').classList.remove('translate-y-20', 'opacity-0');
+    setTimeout(() => $('toast').classList.add('translate-y-20', 'opacity-0'), 2600);
+}
+function toggleDarkMode() { document.documentElement.classList.toggle('dark'); render(); }
+function setStatus(t) { $('dataSourceLabel').innerText = t; }
+
+// ======================= Pengambilan data =======================
+async function fetchAll(table, cols, since) {
+    const out = [], size = 1000;
+    for (let from = 0; from < 100000; from += size) {
+        let q = sb.from(table).select(cols).order('created_at', { ascending: false }).range(from, from + size - 1);
+        if (since) q = q.gte('created_at', since);
+        const { data, error } = await q;
+        if (error) throw error;
+        out.push(...data);
+        if (data.length < size) break;
+    }
+    return out;
+}
+
+async function loadData() {
+    setStatus('Memuat data...');
+    $('setupBanner').classList.add('hidden');
+
+    if (demo) {
+        ({ A, V, L } = genDemo());
+        setStatus('Mode data contoh (bukan data asli)');
+        render();
+        return;
+    }
+
+    A = []; V = []; L = [];
+    let viewsError = null;
+
+    if (sb) {
+        const since = addMonths(startOfMonth(new Date()), -24).toISOString();
+        try {
+            const rows = await fetchAll('articles', 'id,title,category,tone,created_at');
+            A = rows.map(a => ({ id: String(a.id), title: a.title, category: a.category, tone: a.tone, created: new Date(a.created_at) }));
+        } catch (e) { console.warn('articles:', e); }
+
+        try {
+            const rows = await fetchAll('article_views', 'article_id,article_title,category,event_type,session_id,source,lang,created_at', since);
+            V = rows.map(r => ({ t: new Date(r.created_at), aid: String(r.article_id), title: r.article_title, cat: r.category, type: r.event_type || 'view', sid: r.session_id, src: r.source || 'portal', lang: r.lang }));
+        } catch (e) { viewsError = e; console.warn('article_views:', e); }
+
+        try {
+            const rows = await fetchAll('whatsapp_leads', 'created_at', since);
+            L = rows.map(r => ({ t: new Date(r.created_at) }));
+        } catch (e) { console.warn('whatsapp_leads:', e); }
+    }
+
+    if (A.length === 0) {
+        const local = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+        A = local.map(a => ({ id: String(a.id), title: a.title, category: a.category, tone: a.tone, created: new Date(Number(a.id) > 1e12 ? Number(a.id) : Date.now()) }));
+    }
+
+    if (viewsError) {
+        $('setupBanner').classList.remove('hidden');
+        $('setupError').innerText = viewsError.message || viewsError.code || '';
+        setStatus('Tabel tayangan belum siap');
+    } else {
+        setStatus(`Supabase • ${fmt(V.length)} kejadian tercatat, ${fmt(A.length)} postingan`);
+    }
+    render();
+}
+
+// ======================= Rentang waktu =======================
+function labelFor(p, d) {
+    if (p === 'month') return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+}
+
+function buildRange(p) {
+    const now = new Date();
+    let n, first, step, prevFirst;
+    if (p === 'day') { n = 30; first = addDays(startOfDay(now), -(n - 1)); step = d => addDays(d, 1); prevFirst = addDays(first, -n); }
+    else if (p === 'week') { n = 12; first = addDays(startOfWeek(now), -7 * (n - 1)); step = d => addDays(d, 7); prevFirst = addDays(first, -7 * n); }
+    else { n = 12; first = addMonths(startOfMonth(now), -(n - 1)); step = d => addMonths(d, 1); prevFirst = addMonths(first, -n); }
+    const buckets = [];
+    let cur = first;
+    for (let i = 0; i < n; i++) {
+        const next = step(cur);
+        buckets.push({ start: cur, end: next, label: labelFor(p, cur) });
+        cur = next;
+    }
+    return { buckets, start: first, end: now, prevStart: prevFirst, prevEnd: first };
+}
+
+const within = (list, s, e, key = 't') => list.filter(x => x[key] >= s && x[key] < e);
+function bucketIndex(t, buckets) {
+    for (let i = buckets.length - 1; i >= 0; i--) if (t >= buckets[i].start) return t < buckets[i].end ? i : -1;
+    return -1;
+}
+
+function stats(ev) {
+    const views = ev.filter(e => e.type === 'view');
+    return { views: views.length, uniq: new Set(views.map(e => e.sid).filter(Boolean)).size, inter: ev.length - views.length };
+}
+const postsIn = (s, e) => A.filter(a => a.created >= s && a.created < e).length;
+
+function delta(cur, prev) {
+    if (prev === 0) return cur > 0 ? { txt: 'baru', cls: 'up' } : { txt: 'sama', cls: 'flat' };
+    const p = Math.round((cur - prev) / prev * 100);
+    return { txt: (p > 0 ? '+' : '') + p + '%', cls: p > 0 ? 'up' : p < 0 ? 'down' : 'flat' };
+}
+const badge = d => `<span class="${d.cls} text-[11px] font-semibold px-1.5 py-0.5 rounded-md">${d.txt}</span>`;
+
+// ======================= Agregasi =======================
+function perArticle(ev) {
+    const m = new Map();
+    ev.forEach(e => {
+        let r = m.get(e.aid);
+        if (!r) { r = { aid: e.aid, title: e.title, cat: e.cat, views: 0, sids: new Set(), shares: 0, inter: 0 }; m.set(e.aid, r); }
+        if (e.type === 'view') { r.views++; if (e.sid) r.sids.add(e.sid); }
+        else { r.inter++; if (e.type === 'share') r.shares++; }
+    });
+    const amap = new Map(A.map(a => [a.id, a]));
+    m.forEach(r => { const a = amap.get(r.aid); if (a) { r.title = a.title || r.title; r.cat = a.category || r.cat; } });
+    return [...m.values()];
+}
+
+// ======================= Render utama =======================
+function render() {
+    document.querySelectorAll('#periodTabs button').forEach(b => {
+        const on = b.dataset.p === period;
+        b.className = 'px-4 py-2 rounded-lg transition ' + (on ? 'bg-white dark:bg-slate-950 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200');
+    });
+
+    Chart.defaults.color = isDark() ? '#94a3b8' : '#64748b';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.borderColor = isDark() ? '#1e293b' : '#e2e8f0';
+
+    const R = buildRange(period);
+    const cur = within(V, R.start, R.end);
+    const prev = within(V, R.prevStart, R.prevEnd);
+
+    const unit = { day: '30 hari terakhir', week: '12 minggu terakhir', month: '12 bulan terakhir' }[period];
+    $('rangeLabel').innerText = `${unit}: ${R.start.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} sampai sekarang`;
+
+    renderSnapshots();
+    renderKPIs(R, cur, prev);
+    renderTrend(R, cur);
+    renderTop(cur);
+    renderCategories(cur);
+    renderTiming(cur);
+    renderLeads(R, cur);
+    renderBreakdowns(cur);
+    renderZero(cur);
+    renderInsights(R, cur, prev);
+}
+
+function setPeriod(p) {
+    period = p;
+    localStorage.setItem('analytics_period', p);
+    render();
+}
+
+// ---------- Ringkasan hari ini / minggu ini / bulan ini ----------
+function renderSnapshots() {
+    const now = new Date();
+    const defs = [
+        { key: 'day', title: 'Hari ini', icon: 'fa-sun', vs: 'kemarin pada jam yang sama' },
+        { key: 'week', title: 'Minggu ini', icon: 'fa-calendar-week', vs: 'minggu lalu pada hari yang sama' },
+        { key: 'month', title: 'Bulan ini', icon: 'fa-calendar', vs: 'bulan lalu pada tanggal yang sama' }
+    ];
+    $('snapshotCards').innerHTML = defs.map(d => {
+        let s, ps;
+        if (d.key === 'day') { s = startOfDay(now); ps = addDays(s, -1); }
+        else if (d.key === 'week') { s = startOfWeek(now); ps = addDays(s, -7); }
+        else { s = startOfMonth(now); ps = addMonths(s, -1); }
+        let pe = new Date(ps.getTime() + (now - s));
+        if (pe > s) pe = s;
+        const c = stats(within(V, s, new Date(now.getTime() + 1)));
+        const p = stats(within(V, ps, pe));
+        const posts = postsIn(s, new Date(now.getTime() + 1));
+        return `
+        <div class="card p-5">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-2"><i class="fa-solid ${d.icon} text-sky-500"></i>${d.title}</span>
+                ${badge(delta(c.views, p.views))}
+            </div>
+            <div class="mt-3 flex items-end gap-2">
+                <span class="text-3xl font-extrabold text-slate-900 dark:text-white">${fmt(c.views)}</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 pb-1.5">tayangan</span>
+            </div>
+            <div class="mt-3 flex gap-5 text-xs text-slate-500 dark:text-slate-400">
+                <span><b class="text-slate-800 dark:text-slate-200">${fmt(c.uniq)}</b> pengunjung</span>
+                <span><b class="text-slate-800 dark:text-slate-200">${fmt(posts)}</b> postingan baru</span>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">Dibanding ${d.vs}</p>
+        </div>`;
+    }).join('');
+}
+
+// ---------- KPI periode ----------
+function kpi(icon, color, label, value, d, sub) {
+    return `
+    <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm ${color}"><i class="fa-solid ${icon}"></i></span>
+            ${d ? badge(d) : ''}
+        </div>
+        <div class="text-2xl font-extrabold text-slate-900 dark:text-white">${value}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${label}</div>
+        ${sub ? `<div class="text-[11px] text-slate-400 mt-1">${sub}</div>` : ''}
+    </div>`;
+}
+
+function renderKPIs(R, cur, prev) {
+    const c = stats(cur), p = stats(prev);
+    const posts = postsIn(R.start, R.end), pposts = postsIn(R.prevStart, R.prevEnd);
+    const avg = A.length ? c.views / A.length : 0, pavg = A.length ? p.views / A.length : 0;
+    const leads = within(L, R.start, R.end).length, pleads = within(L, R.prevStart, R.prevEnd).length;
+    const conv = c.uniq ? Math.min(100, Math.round(leads / c.uniq * 100)) : 0;
+
+    $('kpiCards').innerHTML = [
+        kpi('fa-eye', 'bg-sky-100 text-sky-600 dark:bg-sky-950 dark:text-sky-400', 'Total tayangan', fmt(c.views), delta(c.views, p.views)),
+        kpi('fa-users', 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400', 'Pengunjung unik', fmt(c.uniq), delta(c.uniq, p.uniq)),
+        kpi('fa-pen-nib', 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400', 'Postingan terbit', fmt(posts), delta(posts, pposts), `${fmt(A.length)} postingan seluruhnya`),
+        kpi('fa-chart-simple', 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400', 'Rata-rata tayangan per postingan', fmt(avg), delta(avg, pavg)),
+        kpi('fa-share-nodes', 'bg-pink-100 text-pink-600 dark:bg-pink-950 dark:text-pink-400', 'Dibagikan, dicetak, disimpan', fmt(c.inter), delta(c.inter, p.inter)),
+        kpi('fa-whatsapp fa-brands', 'bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400', 'Pendaftar WhatsApp baru', fmt(leads), delta(leads, pleads), c.uniq ? `${conv}% dari pengunjung unik` : '')
+    ].join('');
+}
+
+// ---------- Grafik ----------
+function mk(id, cfg) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), cfg);
+}
+
+function renderTrend(R, cur) {
+    const n = R.buckets.length;
+    const views = Array(n).fill(0), sets = Array.from({ length: n }, () => new Set()), posts = Array(n).fill(0);
+    cur.forEach(e => {
+        if (e.type !== 'view') return;
+        const i = bucketIndex(e.t, R.buckets);
+        if (i < 0) return;
+        views[i]++; if (e.sid) sets[i].add(e.sid);
+    });
+    A.forEach(a => { const i = bucketIndex(a.created, R.buckets); if (i >= 0) posts[i]++; });
+
+    mk('chartTrend', {
+        data: {
+            labels: R.buckets.map(b => (period === 'week' ? 'Mg ' : '') + b.label),
+            datasets: [
+                { type: 'bar', label: 'Tayangan', data: views, backgroundColor: '#0284c7cc', borderRadius: 4, order: 3, yAxisID: 'y' },
+                { type: 'line', label: 'Pengunjung unik', data: sets.map(s => s.size), borderColor: '#6366f1', backgroundColor: '#6366f1', tension: .3, pointRadius: 2, order: 2, yAxisID: 'y' },
+                { type: 'line', label: 'Postingan terbit', data: posts, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [5, 4], tension: .2, pointRadius: 3, order: 1, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Tayangan' } },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0, stepSize: 1 }, title: { display: true, text: 'Postingan' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ---------- Top 10 ----------
+function renderTop(cur) {
+    const rows = perArticle(cur).filter(r => r.views > 0).sort((a, b) => b.views - a.views);
+    lastRows = rows;
+    const top = rows.slice(0, 10);
+    if (!top.length) {
+        $('topList').innerHTML = `<li class="text-xs text-slate-400 py-8 text-center">Belum ada tayangan pada periode ini. Buka salah satu artikel di portal dan data akan muncul di sini.</li>`;
+        return;
+    }
+    const max = top[0].views;
+    $('topList').innerHTML = top.map((r, i) => {
+        const ci = catInfo(r.cat);
+        return `
+        <li>
+            <a href="index.html?article=${encodeURIComponent(r.aid)}" target="_blank" rel="noopener" class="block group">
+                <div class="flex items-center gap-3">
+                    <span class="w-6 text-right font-mono text-xs text-slate-400">${i + 1}</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition" title="${esc(r.title)}">${esc(r.title || '(tanpa judul)')}</p>
+                        </div>
+                        <div class="mt-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${Math.max(4, r.views / max * 100)}%;background:${ci.color}"></div>
+                        </div>
+                        <p class="mt-1 text-[11px] text-slate-400">${ci.emoji} ${esc(ci.label)} &middot; ${fmt(r.sids.size)} pengunjung &middot; ${fmt(r.shares)} dibagikan</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-base font-extrabold text-slate-900 dark:text-white">${fmt(r.views)}</div>
+                        <div class="text-[11px] text-slate-400">tayangan</div>
+                    </div>
+                </div>
+            </a>
+        </li>`;
+    }).join('');
+}
+
+// ---------- Kategori ----------
+function renderCategories(cur) {
+    const byCat = new Map();
+    perArticle(cur).forEach(r => {
+        const k = r.cat || 'lainnya';
+        const o = byCat.get(k) || { views: 0, uniq: new Set() };
+        o.views += r.views; r.sids.forEach(s => o.uniq.add(s));
+        byCat.set(k, o);
+    });
+    const postCount = {};
+    A.forEach(a => { postCount[a.category] = (postCount[a.category] || 0) + 1; });
+
+    const rows = [...byCat.entries()].map(([k, o]) => ({ k, views: o.views, posts: postCount[k] || 0 })).sort((a, b) => b.views - a.views);
+    const total = rows.reduce((s, r) => s + r.views, 0);
+
+    if (!rows.length) {
+        if (charts.chartCategory) { charts.chartCategory.destroy(); delete charts.chartCategory; }
+        $('categoryTable').innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data kategori.</p>`;
+        return;
+    }
+
+    mk('chartCategory', {
+        type: 'doughnut',
+        data: { labels: rows.map(r => catInfo(r.k).label), datasets: [{ data: rows.map(r => r.views), backgroundColor: rows.map(r => catInfo(r.k).color), borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { display: false } } }
+    });
+
+    $('categoryTable').innerHTML = rows.map(r => {
+        const ci = catInfo(r.k);
+        const share = total ? Math.round(r.views / total * 100) : 0;
+        return `
+        <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${ci.color}"></span>
+            <span class="flex-1 min-w-0 truncate text-slate-700 dark:text-slate-200">${ci.emoji} ${esc(ci.label)}</span>
+            <span class="text-slate-400 shrink-0">${r.posts} post</span>
+            <span class="font-semibold text-slate-800 dark:text-slate-100 w-12 text-right shrink-0">${fmt(r.views)}</span>
+            <span class="text-slate-400 w-9 text-right shrink-0">${share}%</span>
+        </div>
+        <div class="-mt-1 ml-5 text-[11px] text-slate-400">${r.posts ? fmt(r.views / r.posts) + ' tayangan per postingan' : 'postingan sudah dihapus'}</div>`;
+    }).join('');
+}
+
+// ---------- Jam & hari ----------
+function renderTiming(cur) {
+    const hours = Array(24).fill(0), days = Array(7).fill(0);
+    cur.forEach(e => {
+        if (e.type !== 'view') return;
+        hours[e.t.getHours()]++;
+        days[(e.t.getDay() + 6) % 7]++;
+    });
+    const hMax = Math.max(...hours), dMax = Math.max(...days);
+    mk('chartHour', {
+        type: 'bar',
+        data: { labels: hours.map((_, i) => String(i).padStart(2, '0')), datasets: [{ data: hours, backgroundColor: hours.map(v => v === hMax && v > 0 ? '#0284c7' : '#0284c766'), borderRadius: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+    });
+    mk('chartWeekday', {
+        type: 'bar',
+        data: { labels: WEEKDAYS, datasets: [{ data: days, backgroundColor: days.map(v => v === dMax && v > 0 ? '#6366f1' : '#6366f166'), borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+    });
+}
+
+// ---------- Leads ----------
+function renderLeads(R, cur) {
+    const n = R.buckets.length, data = Array(n).fill(0);
+    L.forEach(l => { const i = bucketIndex(l.t, R.buckets); if (i >= 0) data[i]++; });
+    const total = data.reduce((a, b) => a + b, 0);
+    const uniq = stats(cur).uniq;
+    $('leadSummary').innerText = `${fmt(total)} pendaftar pada periode ini` + (uniq ? `, setara ${Math.min(100, Math.round(total / uniq * 100))}% dari pengunjung unik` : '');
+    mk('chartLeads', {
+        type: 'line',
+        data: { labels: R.buckets.map(b => b.label), datasets: [{ data, borderColor: '#14b8a6', backgroundColor: '#14b8a633', fill: true, tension: .3, pointRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } } } }
+    });
+}
+
+// ---------- Sumber, bahasa, tone ----------
+function barList(items, color) {
+    if (!items.length) return `<p class="text-slate-400">Belum ada data.</p>`;
+    const max = Math.max(...items.map(i => i.v));
+    return items.map(i => `
+        <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-700 dark:text-slate-200">${esc(i.label)}</span><span class="font-semibold text-slate-800 dark:text-slate-100">${i.text}</span></div>
+            <div class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"><div class="h-full rounded-full" style="width:${max ? Math.max(3, i.v / max * 100) : 0}%;background:${color}"></div></div>
+        </div>`).join('');
+}
+
+function renderBreakdowns(cur) {
+    const views = cur.filter(e => e.type === 'view');
+    const total = views.length || 1;
+
+    const src = {}, lang = {};
+    views.forEach(e => { src[e.src || 'portal'] = (src[e.src || 'portal'] || 0) + 1; if (e.lang) lang[e.lang] = (lang[e.lang] || 0) + 1; });
+    $('sourceBars').innerHTML = barList(Object.entries(src).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: SOURCE_LABEL[k] || k, v, text: `${fmt(v)} (${Math.round(v / total * 100)}%)` })), '#0284c7');
+    $('langBars').innerHTML = barList(Object.entries(lang).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: LANG_LABEL[k] || k, v, text: `${fmt(v)} (${Math.round(v / total * 100)}%)` })), '#8b5cf6');
+
+    const toneViews = {}, toneCount = {};
+    A.forEach(a => { if (a.tone) toneCount[a.tone] = (toneCount[a.tone] || 0) + 1; });
+    const amap = new Map(A.map(a => [a.id, a]));
+    views.forEach(e => { const t = amap.get(e.aid)?.tone; if (t) toneViews[t] = (toneViews[t] || 0) + 1; });
+    const tones = Object.keys(toneCount).map(t => ({ label: `${TONE_LABEL[t] || t} (${toneCount[t]} post)`, v: (toneViews[t] || 0) / toneCount[t], text: fmt((toneViews[t] || 0) / toneCount[t]) })).sort((a, b) => b.v - a.v);
+    $('toneBars').innerHTML = barList(tones, '#10b981');
+}
+
+// ---------- Postingan sepi ----------
+function renderZero(cur) {
+    const seen = new Set(cur.filter(e => e.type === 'view').map(e => e.aid));
+    const zero = A.filter(a => !seen.has(a.id)).sort((a, b) => a.created - b.created);
+    if (!zero.length) {
+        $('zeroList').innerHTML = `<p class="text-xs text-emerald-600 dark:text-emerald-400 col-span-full">Semua postingan sudah dibuka minimal sekali pada periode ini.</p>`;
+        return;
+    }
+    $('zeroList').innerHTML = zero.slice(0, 8).map(a => {
+        const ci = catInfo(a.category);
+        const age = Math.max(0, Math.floor((Date.now() - a.created) / 86400000));
+        return `
+        <a href="index.html?article=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-400 dark:hover:border-sky-600 transition">
+            <span class="min-w-0"><span class="block truncate font-medium text-slate-800 dark:text-slate-100" title="${esc(a.title)}">${esc(a.title)}</span><span class="text-[11px] text-slate-400">${ci.emoji} ${esc(ci.label)}</span></span>
+            <span class="text-[11px] text-slate-400 shrink-0">${age} hari lalu</span>
+        </a>`;
+    }).join('') + (zero.length > 8 ? `<p class="text-[11px] text-slate-400 col-span-full">dan ${zero.length - 8} postingan lainnya</p>` : '');
+}
+
+// ---------- Temuan otomatis ----------
+function renderInsights(R, cur, prev) {
+    const out = [];
+    const c = stats(cur), p = stats(prev);
+    const rows = perArticle(cur).filter(r => r.views > 0).sort((a, b) => b.views - a.views);
+
+    if (c.views === 0) {
+        $('insightList').innerHTML = `<li class="text-slate-500 dark:text-slate-400">Belum ada tayangan pada periode ini, jadi belum ada temuan yang bisa ditampilkan.</li>`;
+        return;
+    }
+    const d = delta(c.views, p.views);
+    if (p.views > 0) out.push(`Tayangan ${d.cls === 'down' ? 'turun' : d.cls === 'up' ? 'naik' : 'stabil'} <b>${d.txt}</b> dibanding periode sebelumnya (${fmt(p.views)} menjadi ${fmt(c.views)}).`);
+
+    if (rows[0]) out.push(`Postingan terpopuler: <b>${esc(rows[0].title)}</b> dengan ${fmt(rows[0].views)} tayangan, ${Math.round(rows[0].views / c.views * 100)}% dari seluruh tayangan.`);
+
+    const postCount = {};
+    A.forEach(a => { postCount[a.category] = (postCount[a.category] || 0) + 1; });
+    const catViews = {};
+    rows.forEach(r => { catViews[r.cat] = (catViews[r.cat] || 0) + r.views; });
+    const ranked = Object.entries(catViews).sort((a, b) => b[1] - a[1]);
+    if (ranked[0]) out.push(`Kategori paling banyak dibuka: <b>${esc(catInfo(ranked[0][0]).label)}</b> (${fmt(ranked[0][1])} tayangan).`);
+    const eff = Object.entries(catViews).filter(([k]) => postCount[k]).map(([k, v]) => [k, v / postCount[k]]).sort((a, b) => b[1] - a[1]);
+    if (eff[0] && eff[0][0] !== ranked[0]?.[0]) out.push(`Kategori paling efisien per postingan: <b>${esc(catInfo(eff[0][0]).label)}</b> (${fmt(eff[0][1])} tayangan per postingan). Layak ditambah jumlah postingannya.`);
+
+    const hours = Array(24).fill(0), days = Array(7).fill(0);
+    cur.forEach(e => { if (e.type === 'view') { hours[e.t.getHours()]++; days[(e.t.getDay() + 6) % 7]++; } });
+    const bh = hours.indexOf(Math.max(...hours)), bd = days.indexOf(Math.max(...days));
+    const hh = h => String(h).padStart(2, '0') + ':00';
+    out.push(`Pembaca paling aktif sekitar pukul <b>${hh(bh)}–${hh((bh + 1) % 24)}</b> dan pada hari <b>${['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][bd]}</b>. Jadwalkan publikasi atau bagikan tautan sedikit sebelum waktu itu.`);
+
+    const linkViews = cur.filter(e => e.type === 'view' && e.src === 'link').length;
+    if (linkViews > 0) out.push(`<b>${Math.round(linkViews / c.views * 100)}%</b> tayangan datang dari tautan yang dibagikan, jadi tombol bagikan memang efektif membawa pembaca baru.`);
+
+    const leads = within(L, R.start, R.end).length;
+    if (c.uniq > 0 && leads > 0) out.push(`Dari ${fmt(c.uniq)} pengunjung unik, ${fmt(leads)} mendaftarkan WhatsApp (${Math.min(100, Math.round(leads / c.uniq * 100))}%).`);
+
+    const seen = new Set(rows.map(r => r.aid));
+    const zero = A.filter(a => !seen.has(a.id)).length;
+    if (zero > 0) out.push(`${fmt(zero)} dari ${fmt(A.length)} postingan belum dibuka sama sekali pada periode ini.`);
+
+    $('insightList').innerHTML = out.map(t => `<li class="flex gap-2.5"><i class="fa-solid fa-circle text-[6px] text-sky-500 mt-2 shrink-0"></i><span>${t}</span></li>`).join('');
+}
+
+// ======================= Aksi =======================
+function exportCSV() {
+    if (!lastRows.length) { showToast('Belum ada data untuk diexport', 'fa-triangle-exclamation'); return; }
+    const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+    let csv = 'Peringkat,Judul,Kategori,Tayangan,Pengunjung unik,Dibagikan,Interaksi lain\n';
+    lastRows.forEach((r, i) => {
+        csv += [i + 1, q(r.title), q(catInfo(r.cat).label), r.views, r.sids.size, r.shares, r.inter - r.shares].join(',') + '\n';
+    });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `analitik-konten-${period}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('CSV berhasil diexport');
+}
+
+function copySQL() {
+    navigator.clipboard.writeText(SETUP_SQL).then(() => showToast('SQL disalin. Tempel di Supabase SQL Editor.'));
+}
+
+function refreshIgnoreBtn() {
+    const on = localStorage.getItem('portal_admin') === '1';
+    const b = $('btnIgnoreMe');
+    b.className = 'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition ' + (on
+        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'
+        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700');
+    b.innerHTML = `<i class="fa-solid ${on ? 'fa-eye-slash' : 'fa-eye'}"></i><span class="hidden md:inline">${on ? 'Kunjungan saya diabaikan' : 'Abaikan kunjungan saya'}</span>`;
+}
+function toggleIgnoreMe() {
+    if (localStorage.getItem('portal_admin') === '1') localStorage.removeItem('portal_admin');
+    else localStorage.setItem('portal_admin', '1');
+    refreshIgnoreBtn();
+    showToast(localStorage.getItem('portal_admin') === '1' ? 'Kunjungan dari browser ini tidak akan dihitung' : 'Kunjungan dari browser ini kembali dihitung');
+}
+
+function toggleDemo() {
+    demo = !demo;
+    const b = $('btnDemo');
+    b.innerHTML = demo ? `<i class="fa-solid fa-xmark"></i><span class="hidden md:inline">Tutup data contoh</span>` : `<i class="fa-solid fa-flask"></i><span class="hidden md:inline">Data contoh</span>`;
+    loadData();
+}
+
+// ======================= Data contoh =======================
+function genDemo() {
+    let seed = 42;
+    const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const pick = arr => arr[Math.floor(rnd() * arr.length)];
+    const now = Date.now(), DAYMS = 86400000;
+
+    const titles = [
+        ['Menjaga Konsistensi Amal di Era Digital', 'khutbah', 'formal'], ['Adab Menuntut Ilmu bagi Pelajar', 'khutbah', 'inspiratif'],
+        ['Strategi Manajemen Waktu untuk Gen Z', 'artikel', 'santai'], ['Cara Membangun Kebiasaan Membaca', 'artikel', 'santai'],
+        ['Mengapa Kita Mudah Terdistraksi', 'artikel', 'akademis'], ['3 Kebiasaan Pagi Pemimpin Berprestasi', 'script', 'inspiratif'],
+        ['Podcast: Hidup Tenang di Tengah Notifikasi', 'script', 'santai'], ['Panduan Content Calendar yang Rapi', 'sosmed', 'profesional'],
+        ['5 Ide Konten Singkat Pekan Ini', 'sosmed', 'santai'], ['Ringkasan Kajian Bulan Ini', 'newsletter', 'formal'],
+        ['Kabar Komunitas Edisi Terbaru', 'newsletter', 'santai'], ['Pengumuman Program Kelas Baru', 'buletin', 'formal'],
+        ['Laporan Kegiatan Triwulan', 'buletin', 'profesional'], ['Mengelola Emosi saat Bekerja', 'artikel', 'profesional']
+    ];
+    const arts = titles.map((t, i) => ({
+        id: 'demo-' + (i + 1), title: t[0], category: t[1], tone: t[2],
+        created: new Date(now - (330 - i * 22 - rnd() * 8) * DAYMS), w: Math.pow(rnd(), 2.2) + 0.05
+    }));
+    const catBoost = { artikel: 1.6, khutbah: 1.3, sosmed: 1.0, script: 0.8, newsletter: 0.5, buletin: 0.4 };
+    arts.forEach(a => a.w *= catBoost[a.category]);
+    const totalW = arts.reduce((s, a) => s + a.w, 0);
+    const pickArt = () => { let r = rnd() * totalW; for (const a of arts) { r -= a.w; if (r <= 0) return a; } return arts[0]; };
+
+    const hw = [1, 1, 1, 2, 5, 8, 6, 4, 4, 5, 5, 6, 8, 6, 5, 5, 6, 8, 11, 14, 13, 9, 5, 2];
+    const hTotal = hw.reduce((a, b) => a + b, 0);
+    const pickHour = () => { let r = rnd() * hTotal; for (let h = 0; h < 24; h++) { r -= hw[h]; if (r <= 0) return h; } return 20; };
+    const dw = [1, 0.9, 0.95, 1.05, 1.4, 1.2, 0.9];
+
+    const views = [];
+    for (let i = 0; i < 6500; i++) {
+        const a = pickArt();
+        const span = (now - a.created.getTime()) / DAYMS;
+        const age = Math.pow(rnd(), 1.8) * span;
+        const t = new Date(now - age * DAYMS);
+        if (rnd() > dw[(t.getDay() + 6) % 7] / 1.4) continue;
+        t.setHours(pickHour(), Math.floor(rnd() * 60), 0, 0);
+        if (t.getTime() > now || t < a.created) continue;
+        const r = rnd();
+        views.push({
+            t, aid: a.id, title: a.title, cat: a.category,
+            type: r < 0.89 ? 'view' : r < 0.96 ? 'share' : r < 0.98 ? 'print' : 'bookmark',
+            sid: 's' + Math.floor(rnd() * 1800), src: rnd() < 0.7 ? 'portal' : 'link',
+            lang: rnd() < 0.8 ? 'id' : rnd() < 0.6 ? 'en' : 'ar'
+        });
+    }
+    const leads = [];
+    for (let i = 0; i < 420; i++) leads.push({ t: new Date(now - Math.pow(rnd(), 1.5) * 320 * DAYMS) });
+
+    // artikel sengaja dibiarkan tanpa tayangan agar daftar "belum dibuka" terlihat
+    const quiet = new Set(['demo-13']);
+    return { A: arts.map(({ w, ...a }) => a), V: views.filter(v => !quiet.has(v.aid)), L: leads };
+}
+
+// ======================= Init =======================
+window.onload = function () {
+    refreshIgnoreBtn();
+    loadData();
+};
+</script>
+</body>
+</html>
