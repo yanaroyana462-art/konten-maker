@@ -687,6 +687,35 @@
         let onlyBookmarks = false;
         let activeModalArticle = null;
 
+        // --- Session ID & Analytics Tracking Helpers ---
+        function getSessionId() {
+            let sid = sessionStorage.getItem('portal_session_id');
+            if (!sid) {
+                sid = 's_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
+                sessionStorage.setItem('portal_session_id', sid);
+            }
+            return sid;
+        }
+
+        async function trackEvent(article, eventType = 'view', source = 'portal') {
+            if (!article || !supabaseClient) return;
+            if (localStorage.getItem('portal_admin') === '1') return; // Abaikan jika mode admin aktif
+
+            try {
+                await supabaseClient.from('article_views').insert([{
+                    article_id: String(article.id),
+                    article_title: article.title || '',
+                    category: article.category || '',
+                    event_type: eventType,
+                    session_id: getSessionId(),
+                    source: source,
+                    lang: currentLang || 'id'
+                }]);
+            } catch (err) {
+                console.warn('Gagal mencatat analitik:', err);
+            }
+        }
+
         // --- Fetch Articles (Supabase with LocalStorage Fallback) ---
         async function fetchArticles() {
             let remoteArticles = [];
@@ -745,7 +774,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const articleParam = urlParams.get('article') || (window.location.hash.startsWith('#article-') ? window.location.hash.replace('#article-', '') : null);
             if (articleParam) {
-                openModal(articleParam);
+                openModal(articleParam, 'link');
             }
         };
 
@@ -1149,12 +1178,13 @@
         }
 
         // --- Modal Dialog Actions ---
-        function openModal(id) {
+        function openModal(id, source = 'portal') {
             const art = articles.find(a => String(a.id) === String(id));
             if (!art) return;
             const t = translations[currentLang] || translations.id;
 
             activeModalArticle = art;
+            trackEvent(art, 'view', source);
             document.getElementById('modalTitle').innerText = art.title;
             document.getElementById('modalDate').innerText = `📅 ${art.date}`;
             document.getElementById('modalWordCount').innerText = `📝 ${art.words} ${t.words}`;
@@ -1260,6 +1290,8 @@
                 showToast('Dihapus dari favorit', 'fa-bookmark');
             } else {
                 bookmarkedIds.push(id);
+                const art = articles.find(a => String(a.id) === String(id));
+                if (art) trackEvent(art, 'bookmark');
                 showToast('Disimpan ke favorit');
             }
             localStorage.setItem('portal_bookmarks', JSON.stringify(bookmarkedIds));
@@ -1330,6 +1362,7 @@
             if (event) event.stopPropagation();
             const art = id ? articles.find(a => String(a.id) === String(id)) : activeModalArticle;
             if (!art) return;
+            trackEvent(art, 'share');
 
             const articleUrl = `${window.location.origin}${window.location.pathname}?article=${encodeURIComponent(art.id)}`;
             const shareText = `*${art.title}*\n\n"${art.snippet}"\n\nBaca artikel selengkapnya di:\n${articleUrl}`;
@@ -1374,6 +1407,7 @@
         // --- Print Preview Ramah Kertas ---
         function printCurrentArticle() {
             if (!activeModalArticle) return;
+            trackEvent(activeModalArticle, 'print');
 
             const printFrame = document.createElement('iframe');
             printFrame.style.position = 'fixed';
