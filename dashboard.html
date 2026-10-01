@@ -1517,7 +1517,7 @@ Konten HTML Asli:
 ${contentHtml}`;
 
             const endpoint = apiKey 
-                ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+                ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
                 : '/api/generate';
             const body = apiKey ? { contents: [{ parts: [{ text: prompt }] }] } : { prompt };
 
@@ -1530,7 +1530,10 @@ ${contentHtml}`;
             const data = await response.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!text) return { en: null, ar: null };
-            return JSON.parse(text.replace(/```json|```/g, '').trim());
+            const cleaned = text.replace(/```json|```/g, '').trim();
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) return { en: null, ar: null };
+            return JSON.parse(jsonMatch[0]);
         }
 
         // --- Publish Content to Portal (index.html) ---
