@@ -271,6 +271,9 @@
                     <span id="t-btnBack">Kembali ke Daftar</span>
                 </button>
                 <div class="flex items-center gap-2 flex-wrap">
+                    <button id="btnTTS" onclick="toggleTTS()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Dengarkan pembacaan artikel">
+                        <i id="ttsIcon" class="fa-solid fa-volume-high text-sky-500"></i> <span id="t-btnListen">Dengarkan</span>
+                    </button>
                     <button onclick="shareArticle()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                         <i class="fa-solid fa-share-nodes"></i> <span id="t-btnShare" class="hidden sm:inline">Bagikan</span>
                     </button>
@@ -565,6 +568,8 @@
                 tabBuletin: 'Buletin',
                 btnBack: 'Kembali ke Daftar',
                 btnBackBottom: 'Kembali ke Katalog Konten',
+                btnListen: 'Dengarkan',
+                btnStopListen: 'Berhenti',
                 btnShare: 'Bagikan',
                 btnPrint: 'Cetak',
                 btnSave: 'Simpan',
@@ -627,6 +632,8 @@
                 tabBuletin: 'Bulletin',
                 btnBack: 'Back to List',
                 btnBackBottom: 'Back to Content Catalog',
+                btnListen: 'Listen',
+                btnStopListen: 'Stop',
                 btnShare: 'Share',
                 btnPrint: 'Print',
                 btnSave: 'Save',
@@ -689,6 +696,8 @@
                 tabBuletin: 'أخبار',
                 btnBack: 'العودة للقائمة',
                 btnBackBottom: 'الرجوع إلى دليل المحتوى',
+                btnListen: 'استمع',
+                btnStopListen: 'إيقاف',
                 btnShare: 'مشاركة',
                 btnPrint: 'طباعة',
                 btnSave: 'حفظ',
@@ -744,6 +753,9 @@
         let bookmarkedIds = JSON.parse(localStorage.getItem('portal_bookmarks') || '[]');
         let onlyBookmarks = false;
         let activeModalArticle = null;
+        let isSpeaking = false;
+        let ttsItems = [];
+        let ttsIndex = 0;
 
         // --- Session ID & Analytics Tracking Helpers ---
         function getSessionId() {
@@ -893,6 +905,7 @@
             safeSetText('t-tab-buletin', t.tabBuletin);
             safeSetText('t-btnBack', t.btnBack);
             safeSetText('t-btnBackBottom', t.btnBackBottom);
+            safeSetText('t-btnListen', isSpeaking ? t.btnStopListen : t.btnListen);
             safeSetText('t-btnShare', t.btnShare);
             safeSetText('t-btnPrint', t.btnPrint);
             safeSetText('t-btnSave', t.btnSave);
@@ -1306,6 +1319,9 @@
         function openModal(id, source = 'portal') {
             const art = articles.find(a => String(a.id) === String(id));
             if (!art) return;
+            stopTTS();
+            ttsItems = [];
+            ttsIndex = 0;
             const t = translations[currentLang] || translations.id;
 
             activeModalArticle = art;
@@ -1335,6 +1351,7 @@
                 document.getElementById('modalTitle').setAttribute('dir', 'ltr');
             }
             updateModalBookmarkBtn();
+            updateTTSButton();
 
             // Tampilkan detail artikel di dalam halaman, sembunyikan daftar artikel
             const listView = document.getElementById('articlesListView');
@@ -1347,6 +1364,9 @@
         }
 
         function closeModal() {
+            stopTTS();
+            ttsItems = [];
+            ttsIndex = 0;
             const listView = document.getElementById('articlesListView');
             const detailView = document.getElementById('articleDetailView');
             if (detailView) detailView.classList.add('hidden');
@@ -1491,6 +1511,190 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 2500);
+        }
+
+        // --- Text-to-Speech (TTS) System ---
+        function stopTTS() {
+            isSpeaking = false;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            document.querySelectorAll('.tts-segment.tts-active').forEach(el => {
+                el.classList.remove('tts-active', 'bg-amber-200', 'text-slate-900', 'dark:bg-amber-900/70', 'dark:text-amber-100', 'ring-2', 'ring-amber-400', 'dark:ring-amber-500');
+            });
+            ttsIndex = 0;
+            updateTTSButton();
+        }
+
+        function updateTTSButton() {
+            const btnIcon = document.getElementById('ttsIcon');
+            const btnText = document.getElementById('t-btnListen');
+            const t = translations[currentLang] || translations.id;
+            if (!btnIcon || !btnText) return;
+
+            if (isSpeaking) {
+                btnIcon.className = 'fa-solid fa-circle-stop text-rose-500 animate-pulse';
+                btnText.innerText = t.btnStopListen;
+            } else {
+                btnIcon.className = 'fa-solid fa-volume-high text-sky-500';
+                btnText.innerText = t.btnListen;
+            }
+        }
+
+        function prepareTTSElements() {
+            const titleEl = document.getElementById('modalTitle');
+            const bodyEl = document.getElementById('modalBody');
+            if (!titleEl || !bodyEl) return [];
+
+            const sentenceItems = [];
+            let idx = 0;
+
+            // Segmen judul
+            const titleText = titleEl.innerText.trim();
+            if (titleText && !titleEl.querySelector('.tts-segment')) {
+                titleEl.innerHTML = `<span class="tts-segment cursor-pointer transition-colors duration-200 rounded px-1" data-tts-id="${idx}">${titleText}</span>`;
+                const titleSpan = titleEl.firstElementChild;
+                if (titleSpan) {
+                    titleSpan.onclick = (e) => {
+                        e.stopPropagation();
+                        jumpToTTSSegment(parseInt(titleSpan.dataset.ttsId, 10));
+                    };
+                }
+                sentenceItems.push({ text: titleText, id: idx });
+                idx++;
+            }
+
+            // Ambil seluruh simpul teks di dalam badan artikel
+            const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT, {
+                acceptNode: (node) => {
+                    if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+                    if (node.parentElement && node.parentElement.closest('.no-print')) return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+
+            const textNodes = [];
+            while (walker.nextNode()) {
+                textNodes.push(walker.currentNode);
+            }
+
+            const sentenceRegex = /[^.!?؟\n]+[.!?؟]+|[^.!?؟\n]+$/g;
+            textNodes.forEach(node => {
+                const text = node.nodeValue;
+                const matches = text.match(sentenceRegex);
+                if (!matches) return;
+
+                const frag = document.createDocumentFragment();
+                matches.forEach(m => {
+                    const trimmed = m.trim();
+                    if (trimmed) {
+                        const span = document.createElement('span');
+                        span.className = 'tts-segment cursor-pointer transition-colors duration-200 rounded px-0.5';
+                        span.dataset.ttsId = String(idx);
+                        span.textContent = m;
+                        span.onclick = (e) => {
+                            e.stopPropagation();
+                            jumpToTTSSegment(parseInt(span.dataset.ttsId, 10));
+                        };
+                        frag.appendChild(span);
+                        sentenceItems.push({ text: trimmed, id: idx });
+                        idx++;
+                    } else {
+                        frag.appendChild(document.createTextNode(m));
+                    }
+                });
+                node.parentNode.replaceChild(frag, node);
+            });
+
+            return sentenceItems;
+        }
+
+        function playTTSItem(index) {
+            if (!isSpeaking) return;
+            if (index >= ttsItems.length) {
+                stopTTS();
+                return;
+            }
+
+            ttsIndex = index;
+            document.querySelectorAll('.tts-segment.tts-active').forEach(el => {
+                el.classList.remove('tts-active', 'bg-amber-200', 'text-slate-900', 'dark:bg-amber-900/70', 'dark:text-amber-100', 'ring-2', 'ring-amber-400', 'dark:ring-amber-500');
+            });
+
+            const activeEl = document.querySelector(`.tts-segment[data-tts-id="${index}"]`);
+            if (activeEl) {
+                activeEl.classList.add('tts-active', 'bg-amber-200', 'text-slate-900', 'dark:bg-amber-900/70', 'dark:text-amber-100', 'ring-2', 'ring-amber-400', 'dark:ring-amber-500');
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            const item = ttsItems[index];
+            const langMap = { id: 'id-ID', en: 'en-US', ar: 'ar-SA' };
+            const targetLangCode = langMap[currentLang] || 'id-ID';
+
+            const utterance = new SpeechSynthesisUtterance(item.text);
+            utterance.lang = targetLangCode;
+            utterance.rate = currentLang === 'ar' ? 0.9 : 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                const matchedVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(targetLangCode.toLowerCase().slice(0, 2)));
+                if (matchedVoice) utterance.voice = matchedVoice;
+            }
+
+            utterance.onend = () => {
+                if (isSpeaking && ttsIndex === index) {
+                    playTTSItem(index + 1);
+                }
+            };
+
+            utterance.onerror = (e) => {
+                if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                    stopTTS();
+                }
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function jumpToTTSSegment(id) {
+            if (!('speechSynthesis' in window)) return;
+            if (!activeModalArticle) return;
+            if (ttsItems.length === 0) {
+                ttsItems = prepareTTSElements();
+            }
+            isSpeaking = true;
+            updateTTSButton();
+            window.speechSynthesis.cancel();
+            ttsIndex = id;
+            playTTSItem(id);
+        }
+
+        function toggleTTS() {
+            if (!('speechSynthesis' in window)) {
+                showToast('Browser Anda tidak mendukung Text-to-Speech', 'fa-triangle-exclamation');
+                return;
+            }
+
+            if (isSpeaking) {
+                stopTTS();
+                return;
+            }
+
+            if (!activeModalArticle) return;
+
+            if (ttsItems.length === 0) {
+                ttsItems = prepareTTSElements();
+            }
+
+            if (ttsItems.length === 0) {
+                showToast('Tidak ada teks untuk dibaca', 'fa-triangle-exclamation');
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+            isSpeaking = true;
+            updateTTSButton();
+            playTTSItem(0);
         }
 
         // --- Share Article Snippet & Link Helper ---
