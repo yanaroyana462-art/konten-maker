@@ -1239,6 +1239,7 @@
             const loadMoreInfo = document.getElementById('loadMoreInfo');
             const selectedTone = document.getElementById('filterTone').value;
             const sortBy = document.getElementById('sortBy').value;
+            const t = translations[currentLang] || translations.id;
 
             // Filtering
             let filtered = articles.filter(art => {
@@ -1289,7 +1290,6 @@
                     loadMoreContainer.classList.add('hidden');
                 }
             }
-            const t = translations[currentLang] || translations.id;
             grid.innerHTML = paginated.map(art => {
                 const isBookmarked = bookmarkedIds.some(bId => String(bId) === String(art.id));
                 const isRTL = currentLang === 'ar';
