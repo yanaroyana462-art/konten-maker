@@ -100,7 +100,7 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="relative w-full sm:max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
-                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari berdasarkan nama atau no WhatsApp..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari berdasarkan nama, email, atau no WhatsApp..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
             </div>
             <button onclick="fetchLeads()" class="self-end sm:self-auto px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition flex items-center gap-2">
                 <i class="fa-solid fa-rotate"></i>
@@ -117,6 +117,7 @@
                             <th class="py-3.5 px-4 w-12 text-center">No</th>
                             <th class="py-3.5 px-4">Nama Lengkap</th>
                             <th class="py-3.5 px-4">Nomor WhatsApp</th>
+                            <th class="py-3.5 px-4">Email</th>
                             <th class="py-3.5 px-4">Waktu Terdaftar</th>
                             <th class="py-3.5 px-4 text-center">Aksi Langsung</th>
                         </tr>
@@ -170,7 +171,8 @@
                         remoteLeads = data.map(item => ({
                             id: item.id,
                             name: item.name,
-                            phone: item.phone,
+                            phone: String(item.phone || ''),
+                            email: item.email || '',
                             created_at: item.created_at,
                             date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', {
                                 day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -210,7 +212,8 @@
             const filtered = allLeads.filter(lead => {
                 return !searchQuery || 
                     lead.name.toLowerCase().includes(searchQuery) || 
-                    lead.phone.includes(searchQuery);
+                    (lead.email && lead.email.toLowerCase().includes(searchQuery)) ||
+                    String(lead.phone || '').includes(searchQuery);
             });
 
             if (filtered.length === 0) {
@@ -225,6 +228,7 @@
                     <td class="py-3 px-4 text-center font-mono text-slate-400 text-xs">${idx + 1}</td>
                     <td class="py-3 px-4 font-semibold text-slate-900 dark:text-white">${lead.name}</td>
                     <td class="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-400 font-medium">+${lead.phone}</td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-mono text-xs">${lead.email || '-'}</td>
                     <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs font-mono">${lead.date || '-'}</td>
                     <td class="py-3 px-4 text-center">
                         <a href="https://wa.me/${lead.phone}?text=Halo%20${encodeURIComponent(lead.name)},%20terima%20kasih%20telah%20mengunjungi%20portal%20konten%20kami!" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 font-medium text-xs transition">
@@ -254,9 +258,9 @@
                 return;
             }
 
-            let csv = 'No,Nama Lengkap,Nomor WhatsApp,Waktu Terdaftar\n';
+            let csv = 'No,Nama Lengkap,Nomor WhatsApp,Email,Waktu Terdaftar\n';
             allLeads.forEach((lead, i) => {
-                csv += `"${i + 1}","${lead.name.replace(/"/g, '""')}","'+${lead.phone}","${lead.date || '-'}"\n`;
+                csv += `"${i + 1}","${lead.name.replace(/"/g, '""')}","'+${lead.phone}","${(lead.email || '').replace(/"/g, '""')}","${lead.date || '-'}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
