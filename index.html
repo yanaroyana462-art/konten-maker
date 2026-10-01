@@ -851,6 +851,7 @@
         let ttsIndex = 0;
         const ttsSpeeds = [0.75, 1.0, 1.25, 1.5];
         let ttsSpeedIndex = 1;
+        let isAdmin = false;
         let selectedVoiceURI = '';
         const fontSizes = ['15px', '18px', '21px', '24px'];
         let currentFontSizeIndex = 1;
@@ -867,7 +868,7 @@
 
         async function trackEvent(article, eventType = 'view', source = 'portal') {
             if (!article || !supabaseClient) return;
-            if (localStorage.getItem('portal_admin') === '1') return; // Abaikan jika mode admin aktif
+            if (isAdmin) return; // Abaikan jika mode admin aktif
 
             try {
                 await supabaseClient.from('article_views').insert([{
@@ -936,7 +937,7 @@
             // Cek apakah pengguna sudah mengisi formulir WhatsApp
             checkLeadAccess();
             
-            updateAdminUI();
+            await checkAdminSession();
             // Terapkan bahasa pilihan pengguna
             const langSelect = document.getElementById('langSelector');
             if (langSelect) langSelect.value = currentLang;
@@ -1200,8 +1201,19 @@
         }
 
         // --- Admin Authentication & UI Handlers ---
+        async function checkAdminSession() {
+            try {
+                const res = await fetch('/api/verify-admin', { credentials: 'same-origin' });
+                const data = await res.json();
+                isAdmin = Boolean(data && data.authenticated);
+            } catch (err) {
+                isAdmin = false;
+            }
+            updateAdminUI();
+            return isAdmin;
+        }
+
         function updateAdminUI() {
-            const isAdmin = localStorage.getItem('portal_admin') === '1';
             const btnDashboard = document.getElementById('btnAdminDashboard');
             const btnLock = document.getElementById('btnAdminLock');
             const lockIcon = document.getElementById('adminLockIcon');
@@ -1223,10 +1235,17 @@
             }
         }
 
-        function handleAdminButtonClick() {
-            const isAdmin = localStorage.getItem('portal_admin') === '1';
+        async function handleAdminButtonClick() {
             if (isAdmin) {
                 if (confirm('Keluar dari mode admin? Akses dashboard dan hak edit/hapus konten akan dinonaktifkan.')) {
+                    try {
+                        await fetch('/api/verify-admin', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'logout' })
+                        });
+                    } catch (e) {}
+                    isAdmin = false;
                     localStorage.removeItem('portal_admin');
                     updateAdminUI();
                     renderArticles();
@@ -1271,25 +1290,18 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    localStorage.setItem('portal_admin', '1');
+                    isAdmin = true;
                     closeAdminLoginModal();
                     updateAdminUI();
                     renderArticles();
                     showToast('Login berhasil: Mode Admin aktif!', 'fa-shield-halved');
                 } else {
+                    isAdmin = false;
                     showToast(data.error || 'PIN / Password salah!', 'fa-triangle-exclamation');
                 }
             } catch (err) {
-                // Fallback darurat jika dijalankan di preview lokal tanpa server vercel
-                if (pin === '123456') {
-                    localStorage.setItem('portal_admin', '1');
-                    closeAdminLoginModal();
-                    updateAdminUI();
-                    renderArticles();
-                    showToast('Mode Admin aktif (mode offline)!', 'fa-shield-halved');
-                } else {
-                    showToast('Gagal memverifikasi ke server', 'fa-triangle-exclamation');
-                }
+                isAdmin = false;
+                showToast('Gagal memverifikasi ke server', 'fa-triangle-exclamation');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-unlock"></i><span>Masuk Admin</span>`;
@@ -1471,7 +1483,6 @@
                 const isRTL = currentLang === 'ar';
                 const artTitle = (currentLang === 'en' && art.title_en) ? art.title_en : (currentLang === 'ar' && art.title_ar) ? art.title_ar : art.title;
                 const artSnippet = (currentLang === 'en' && art.snippet_en) ? art.snippet_en : (currentLang === 'ar' && art.snippet_ar) ? art.snippet_ar : art.snippet;
-                const isAdmin = localStorage.getItem('portal_admin') === '1';
                 return `
                     <article class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:shadow-xl hover:border-sky-500/50 dark:hover:border-sky-500/50 transition-all duration-200 group">
                         <div class="space-y-3">
@@ -1593,10 +1604,16 @@
         }
 
         // --- Article Edit & Delete Actions ---
-        function editArticle(id, event) {
+        async function editArticle(id, event) {
             if (event) event.stopPropagation();
-            if (localStorage.getItem('portal_admin') !== '1') {
+            if (!isAdmin) {
                 showToast('Hanya admin yang dapat mengedit artikel', 'fa-shield-halved');
+                return;
+            }
+            const active = await checkAdminSession();
+            if (!active) {
+                renderArticles();
+                showToast('Sesi admin berakhir, silakan login kembali', 'fa-shield-halved');
                 return;
             }
             window.location.href = `dashboard.html?id=${encodeURIComponent(id)}`;
@@ -1610,8 +1627,14 @@
 
         async function deleteArticle(id, event) {
             if (event) event.stopPropagation();
-            if (localStorage.getItem('portal_admin') !== '1') {
+            if (!isAdmin) {
                 showToast('Akses ditolak: Hanya admin yang dapat menghapus konten!', 'fa-shield-halved');
+                return;
+            }
+            const active = await checkAdminSession();
+            if (!active) {
+                renderArticles();
+                showToast('Sesi admin kedaluwarsa, penghapusan dibatalkan!', 'fa-shield-halved');
                 return;
             }
             if (!confirm('Apakah Anda yakin ingin menghapus artikel ini?')) return;
