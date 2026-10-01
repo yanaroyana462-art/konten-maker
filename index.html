@@ -723,7 +723,13 @@
                             readTime: item.read_time || item.readTime || 1,
                             date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : (item.date || '-'),
                             snippet: item.snippet,
-                            content: item.content
+                            content: item.content,
+                            title_en: item.title_en || null,
+                            snippet_en: item.snippet_en || null,
+                            content_en: item.content_en || null,
+                            title_ar: item.title_ar || null,
+                            snippet_ar: item.snippet_ar || null,
+                            content_ar: item.content_ar || null
                         }));
                     }
                 } catch (err) {
@@ -1108,6 +1114,8 @@
             grid.innerHTML = paginated.map(art => {
                 const isBookmarked = bookmarkedIds.some(bId => String(bId) === String(art.id));
                 const isRTL = currentLang === 'ar';
+                const artTitle = (currentLang === 'en' && art.title_en) ? art.title_en : (currentLang === 'ar' && art.title_ar) ? art.title_ar : art.title;
+                const artSnippet = (currentLang === 'en' && art.snippet_en) ? art.snippet_en : (currentLang === 'ar' && art.snippet_ar) ? art.snippet_ar : art.snippet;
                 return `
                     <article class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:shadow-xl hover:border-sky-500/50 dark:hover:border-sky-500/50 transition-all duration-200 group">
                         <div class="space-y-3">
@@ -1134,12 +1142,12 @@
 
                             <!-- Title -->
                             <h3 onclick="openModal('${art.id}')" class="font-bold text-slate-900 dark:text-white text-base leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 cursor-pointer transition">
-                                ${art.title}
+                                ${artTitle}
                             </h3>
 
                             <!-- Snippet -->
                             <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
-                                ${art.snippet}
+                                ${artSnippet}
                             </p>
                         </div>
 
@@ -1166,7 +1174,10 @@
 
             activeModalArticle = art;
             trackEvent(art, 'view', source);
-            document.getElementById('modalTitle').innerText = art.title;
+            const artTitle = (currentLang === 'en' && art.title_en) ? art.title_en : (currentLang === 'ar' && art.title_ar) ? art.title_ar : art.title;
+            const artContent = (currentLang === 'en' && art.content_en) ? art.content_en : (currentLang === 'ar' && art.content_ar) ? art.content_ar : art.content;
+
+            document.getElementById('modalTitle').innerText = artTitle;
             document.getElementById('modalDate').innerText = `📅 ${art.date}`;
             document.getElementById('modalWordCount').innerText = `📝 ${art.words} ${t.words}`;
             document.getElementById('modalReadTime').innerText = `⏱️ ${art.readTime} ${t.minRead}`;
@@ -1178,7 +1189,15 @@
                 <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${t.labelSegment}: ${art.audience}</span>
             `;
 
-            document.getElementById('modalBody').innerHTML = art.content;
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = artContent;
+            if (currentLang === 'ar') {
+                modalBody.setAttribute('dir', 'rtl');
+                document.getElementById('modalTitle').setAttribute('dir', 'rtl');
+            } else {
+                modalBody.setAttribute('dir', 'ltr');
+                document.getElementById('modalTitle').setAttribute('dir', 'ltr');
+            }
             updateModalBookmarkBtn();
 
             // Tampilkan detail artikel di dalam halaman, sembunyikan daftar artikel

@@ -1140,6 +1140,54 @@ ${contextText}`;
             }
         });
 
+        // --- Auto Translation Generator for Publishing ---
+        async function fetchAutoTranslations(title, contentHtml, snippet) {
+            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
+            const prompt = `Anda adalah penerjemah sastra & editor profesional multibahasa (Bahasa Indonesia ke English dan Modern Standard Arabic / Fusha).
+Terjemahkan judul, cuplikan ringkas (snippet), dan konten HTML berikut ke bahasa Inggris dan bahasa Arab dengan gaya bahasa yang alami, mengalir, dan baku.
+
+ATURAN:
+1. Pertahankan persis seluruh tag HTML (seperti <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
+2. Kembalikan HANYA JSON valid tanpa blok markdown (\`\`\`json):
+{
+  "en": {
+    "title": "Translated English Title",
+    "snippet": "English short summary snippet",
+    "content": "Full English HTML content"
+  },
+  "ar": {
+    "title": "عنوان المقال بالعربية",
+    "snippet": "مقتطف قصير بالعربية",
+    "content": "محتوى المقال الكامل بتنسيق HTML بالعربية"
+  }
+}
+
+Judul Asli:
+${title}
+
+Cuplikan Asli:
+${snippet}
+
+Konten HTML Asli:
+${contentHtml}`;
+
+            const endpoint = apiKey 
+                ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+                : '/api/generate';
+            const body = apiKey ? { contents: [{ parts: [{ text: prompt }] }] } : { prompt };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) return { en: null, ar: null };
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) return { en: null, ar: null };
+            return JSON.parse(text.replace(/```json|```/g, '').trim());
+        }
+
         // --- Publish Content to Portal (index.html) ---
         async function publishToPortal() {
             const title = document.getElementById('docTitle').value.trim();
@@ -1184,12 +1232,31 @@ ${contextText}`;
             const btnPublish = document.getElementById('btnPublish');
             const originalBtnHTML = btnPublish ? btnPublish.innerHTML : '';
 
+            // Terjemahkan otomatis ke Bahasa Inggris & Arab jika bahasa artikel adalah ID
+            let translations = { en: null, ar: null };
+            if (btnPublish) {
+                btnPublish.disabled = true;
+                btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Menerjemahkan AI...</span>`;
+            }
+            showToast('Menerjemahkan otomatis ke EN & AR...', 'fa-language');
+            try {
+                translations = await fetchAutoTranslations(newArticle.title, newArticle.content, newArticle.snippet);
+            } catch (err) {
+                console.warn('Gagal menerjemahkan otomatis, melanjutkan dengan bahasa utama:', err);
+            }
+
+            newArticle.title_en = translations.en?.title || null;
+            newArticle.snippet_en = translations.en?.snippet || null;
+            newArticle.content_en = translations.en?.content || null;
+            newArticle.title_ar = translations.ar?.title || null;
+            newArticle.snippet_ar = translations.ar?.snippet || null;
+            newArticle.content_ar = translations.ar?.content || null;
+
             if (supabaseClient) {
                 if (btnPublish) {
                     btnPublish.disabled = true;
                     btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>${editingArticleId ? 'Memperbarui...' : 'Menyimpan...'}</span>`;
                 }
-                showToast(`${editingArticleId ? 'Memperbarui di' : 'Menyimpan ke'} Supabase...`, 'fa-spinner fa-spin');
                 try {
                     if (editingArticleId) {
                         const { error } = await supabaseClient.from('articles').update({
@@ -1201,7 +1268,13 @@ ${contextText}`;
                             words: newArticle.words,
                             read_time: newArticle.readTime,
                             snippet: newArticle.snippet,
-                            content: newArticle.content
+                            content: newArticle.content,
+                            title_en: newArticle.title_en,
+                            snippet_en: newArticle.snippet_en,
+                            content_en: newArticle.content_en,
+                            title_ar: newArticle.title_ar,
+                            snippet_ar: newArticle.snippet_ar,
+                            content_ar: newArticle.content_ar
                         }).eq('id', editingArticleId);
                         if (error) throw error;
                         showToast('Berhasil diperbarui di Supabase!', 'fa-circle-check');
@@ -1218,7 +1291,13 @@ ${contextText}`;
                         words: newArticle.words,
                         read_time: newArticle.readTime,
                         snippet: newArticle.snippet,
-                        content: newArticle.content
+                        content: newArticle.content,
+                        title_en: newArticle.title_en,
+                        snippet_en: newArticle.snippet_en,
+                        content_en: newArticle.content_en,
+                        title_ar: newArticle.title_ar,
+                        snippet_ar: newArticle.snippet_ar,
+                        content_ar: newArticle.content_ar
                     }]);
 
                     if (error) throw error;
