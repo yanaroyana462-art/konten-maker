@@ -345,6 +345,8 @@
                         <button onclick="execCmd('formatBlock', '<blockquote>')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Kutipan"><i class="fa-solid fa-quote-left"></i></button>
                         <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
                         <button onclick="clearEditor()" class="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-500 rounded w-7 h-7 flex items-center justify-center" title="Kosongkan Editor"><i class="fa-regular fa-trash-can"></i></button>
+                        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
+                        <button onclick="toggleTerminal()" class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded h-7 flex items-center gap-1.5 text-xs text-sky-600 dark:text-sky-400 font-medium" title="Buka/Tutup Terminal Perintah Edit (Ctrl+`)"><i class="fa-solid fa-terminal text-[11px]"></i><span class="hidden sm:inline">Terminal</span></button>
                     </div>
 
                     <!-- Statistics Bar -->
@@ -360,6 +362,56 @@
                 <div class="w-full max-w-3xl min-h-full">
                     <div id="editor" contenteditable="true" data-placeholder="Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'..." oninput="updateStats()" class="editor-content outline-none text-slate-800 dark:text-slate-100 leading-relaxed text-base sm:text-lg min-h-[500px] p-2 space-y-4"></div>
                 </div>
+            </div>
+
+            <!-- Terminal Perintah Edit AI -->
+            <div id="terminalContainer" class="border-t border-slate-800 bg-slate-950 text-slate-200 font-mono text-xs shrink-0 transition-all duration-200 z-10 flex flex-col shadow-2xl">
+                <!-- Terminal Top Bar -->
+                <div class="flex items-center justify-between px-3 py-1.5 bg-slate-900 border-b border-slate-800 select-none">
+                    <div class="flex items-center gap-2">
+                        <div class="flex gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block cursor-pointer hover:opacity-80" onclick="toggleTerminal()" title="Tutup"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block cursor-pointer hover:opacity-80" onclick="clearTerminalLogs()" title="Bersihkan log"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block cursor-pointer hover:opacity-80" onclick="toggleTerminalExpand()" title="Perbesar"></span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 flex items-center gap-1 ml-1 font-semibold">
+                            <i class="fa-solid fa-terminal text-sky-400 text-[10px]"></i> AI Command Terminal
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <div class="hidden md:flex items-center gap-1 text-[10px]">
+                            <button type="button" onclick="quickRunCommand('/perbaiki')" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">/perbaiki</button>
+                            <button type="button" onclick="quickRunCommand('/ringkas')" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">/ringkas</button>
+                            <button type="button" onclick="quickRunCommand('/formal')" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">/formal</button>
+                            <button type="button" onclick="quickRunCommand('undo')" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">undo</button>
+                            <button type="button" onclick="quickRunCommand('/help')" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">/help</button>
+                        </div>
+                        <button type="button" onclick="toggleTerminalExpand()" id="btnTerminalExpand" class="p-1 hover:text-white text-slate-400 rounded" title="Perbesar/Perkecil Terminal">
+                            <i class="fa-solid fa-up-right-and-down-left-from-center text-[10px]"></i>
+                        </button>
+                        <button type="button" onclick="toggleTerminal()" class="p-1 hover:text-white text-slate-400 rounded" title="Tutup Terminal">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terminal Output Log -->
+                <div id="terminalOutput" class="p-3 space-y-1.5 max-h-36 overflow-y-auto text-[11px] leading-relaxed text-slate-300 bg-slate-950/90 font-mono">
+                    <div class="text-slate-500">Content Studio AI Terminal [v1.0] - Ketik perintah instruksi edit atau ketik <span class="text-sky-400 font-bold">/help</span> untuk bantuan.</div>
+                </div>
+
+                <!-- Terminal Input Prompt -->
+                <form onsubmit="handleTerminalSubmit(event)" class="flex items-center gap-2 px-3 py-2 bg-slate-900/90 border-t border-slate-800/80">
+                    <span class="text-emerald-400 font-bold select-none text-xs flex items-center gap-1">
+                        <span class="text-sky-400">studio</span>@<span class="text-slate-400">edit</span>:~$
+                    </span>
+                    <input type="text" id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Ketik perintah edit (contoh: 'ubah gaya jadi santai', 'perbaiki typo', 'tambah subjudul', dll)..." class="flex-1 bg-transparent text-emerald-300 placeholder-slate-600 focus:outline-none text-xs font-mono">
+                    <button type="submit" id="btnTerminalSubmit" class="px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs flex items-center gap-1 transition">
+                        <span>Kirim</span>
+                        <i class="fa-solid fa-arrow-turn-down text-[10px] rotate-90"></i>
+                    </button>
+                </form>
             </div>
 
         </main>
@@ -387,6 +439,11 @@
         const sidebar = document.getElementById('sidebar');
         const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
+        // Terminal & History State
+        let terminalHistory = [];
+        let terminalHistoryIndex = -1;
+        let editorUndoSnapshot = null;
+
         // Setup PDF.js worker
         if (window.pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -412,11 +469,221 @@
             if (editId) {
                 await loadArticleForEditing(editId);
             }
+            setupTerminalKeyListeners();
         };
 
         // --- Dark Mode Toggle ---
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
+        }
+
+        // --- Terminal Functions & Commands ---
+        function toggleTerminal() {
+            const terminal = document.getElementById('terminalContainer');
+            if (!terminal) return;
+            terminal.classList.toggle('hidden');
+            if (!terminal.classList.contains('hidden')) {
+                const input = document.getElementById('terminalInput');
+                if (input) setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        function toggleTerminalExpand() {
+            const output = document.getElementById('terminalOutput');
+            if (!output) return;
+            output.classList.toggle('max-h-36');
+            output.classList.toggle('max-h-72');
+        }
+
+        function clearTerminalLogs() {
+            const output = document.getElementById('terminalOutput');
+            if (output) {
+                output.innerHTML = `<div class="text-slate-500">Terminal dibersihkan. Ketik <span class="text-sky-400 font-bold">/help</span> untuk bantuan.</div>`;
+            }
+        }
+
+        function appendTerminalLog(html) {
+            const output = document.getElementById('terminalOutput');
+            if (!output) return;
+            const line = document.createElement('div');
+            line.innerHTML = html;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function quickRunCommand(cmd) {
+            const input = document.getElementById('terminalInput');
+            if (input) {
+                input.value = cmd;
+                input.focus();
+                handleTerminalSubmit(new Event('submit'));
+            }
+        }
+
+        function setupTerminalKeyListeners() {
+            const input = document.getElementById('terminalInput');
+            if (!input) return;
+
+            // Shortcut Ctrl + ` (backtick) to toggle terminal
+            window.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === '`') {
+                    e.preventDefault();
+                    toggleTerminal();
+                }
+            });
+
+            // History Up/Down navigation
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (terminalHistory.length === 0) return;
+                    if (terminalHistoryIndex < terminalHistory.length - 1) {
+                        terminalHistoryIndex++;
+                        input.value = terminalHistory[terminalHistory.length - 1 - terminalHistoryIndex];
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (terminalHistoryIndex > 0) {
+                        terminalHistoryIndex--;
+                        input.value = terminalHistory[terminalHistory.length - 1 - terminalHistoryIndex];
+                    } else if (terminalHistoryIndex === 0) {
+                        terminalHistoryIndex = -1;
+                        input.value = '';
+                    }
+                }
+            });
+        }
+
+        async function handleTerminalSubmit(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById('terminalInput');
+            const submitBtn = document.getElementById('btnTerminalSubmit');
+            if (!input) return;
+            const rawCmd = input.value.trim();
+            if (!rawCmd) return;
+
+            terminalHistory.push(rawCmd);
+            terminalHistoryIndex = -1;
+            input.value = '';
+
+            appendTerminalLog(`<div class="text-sky-400 mt-1"><span class="text-emerald-400">studio@edit:~$</span> ${rawCmd}</div>`);
+
+            const lower = rawCmd.toLowerCase();
+
+            // 1. Built-in terminal commands
+            if (lower === 'clear' || lower === 'cls' || lower === '/clear') {
+                clearTerminalLogs();
+                return;
+            }
+            if (lower === 'help' || lower === '/help' || lower === '?') {
+                appendTerminalLog(`
+                    <div class="text-slate-300 space-y-1">
+                        <p class="text-amber-300 font-bold">Daftar Perintah Terminal:</p>
+                        <p><span class="text-emerald-400">undo</span> : Batalkan perubahan AI terakhir</p>
+                        <p><span class="text-emerald-400">/stats</span> : Tampilkan statistik jumlah kata & estimasi baca</p>
+                        <p><span class="text-emerald-400">/perbaiki</span> : Rapikan ejaan, typo, dan tata bahasa</p>
+                        <p><span class="text-emerald-400">/ringkas</span> : Ringkas naskah menjadi lebih padat</p>
+                        <p><span class="text-emerald-400">/formal</span> : Ubah gaya tulisan menjadi lebih formal & resmi</p>
+                        <p><span class="text-emerald-400">/santai</span> : Ubah gaya tulisan menjadi lebih santai & kasual</p>
+                        <p><span class="text-emerald-400">clear</span> : Bersihkan riwayat tampilan terminal</p>
+                        <p class="text-slate-400 mt-1">Anda juga bisa mengetik instruksi bebas apapun, contoh: <em>"tambahkan 3 contoh kasus nyata"</em> atau <em>"buat kesimpulan berpoin"</em>.</p>
+                    </div>
+                `);
+                return;
+            }
+            if (lower === 'undo') {
+                if (editorUndoSnapshot !== null) {
+                    editor.innerHTML = editorUndoSnapshot;
+                    updateStats();
+                    appendTerminalLog(`<span class="text-emerald-400">✔ Perubahan berhasil di-undo ke naskah sebelumnya.</span>`);
+                    showToast('Perubahan dibatalkan (Undo)', 'fa-rotate-left');
+                } else {
+                    appendTerminalLog(`<span class="text-amber-400">Belum ada riwayat perubahan yang dapat di-undo.</span>`);
+                }
+                return;
+            }
+            if (lower === '/stats' || lower === 'stats') {
+                const text = editor.innerText.trim();
+                const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+                const chars = text.length;
+                const readTime = Math.ceil(words / 200);
+                appendTerminalLog(`<div class="text-slate-300">📊 <span class="text-white font-bold">${words}</span> kata &bull; <span class="text-white font-bold">${chars}</span> karakter &bull; &plusmn;<span class="text-white font-bold">${readTime}</span> menit waktu baca.</div>`);
+                return;
+            }
+
+            // 2. AI Editing Execution
+            const currentContent = editor.innerHTML.trim();
+            if (!currentContent || editor.innerText.trim().length === 0) {
+                appendTerminalLog(`<span class="text-rose-400">Gagal: Editor masih kosong. Tulis naskah atau buat draf terlebih dahulu sebelum mengedit.</span>`);
+                return;
+            }
+
+            // Simpan snapshot untuk undo
+            editorUndoSnapshot = currentContent;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[10px]"></i>`;
+            appendTerminalLog(`<span class="text-slate-400 animate-pulse"><i class="fa-solid fa-gear fa-spin mr-1"></i>Menjalankan perintah AI...</span>`);
+
+            let instruction = rawCmd;
+            if (lower === '/perbaiki') instruction = 'Perbaiki ejaan, tata bahasa, dan tingkatkan keterbacaan naskah tanpa mengubah substansi intinya.';
+            else if (lower === '/ringkas') instruction = 'Ringkas naskah ini agar lebih padat, lugas, dan efisien tanpa membuang pesan utamanya.';
+            else if (lower === '/formal') instruction = 'Ubah gaya bahasa naskah ini menjadi baku, formal, dan profesional.';
+            else if (lower === '/santai') instruction = 'Ubah gaya bahasa naskah ini menjadi ramah, santai, dan akrab bagi pembaca.';
+
+            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
+            const prompt = `Anda adalah asisten editor konten cerdas.
+Jalankan perintah edit berikut pada dokumen HTML di bawah ini:
+
+PERINTAH:
+${instruction}
+
+DOKUMEN ASLI (HTML):
+${currentContent}
+
+ATURAN:
+1. Kembalikan HANYA format JSON valid tanpa tanda kutip markdown (\`\`\`json):
+{
+  "updatedHtml": "dokumen HTML lengkap yang telah diperbarui sesuai instruksi",
+  "summary": "penjelasan 1 kalimat singkat mengenai bagian apa saja yang diubah"
+}
+2. Pertahankan struktur HTML yang rapi (<h2>, <h3>, <p>, <ul>, <li>, <blockquote>).`;
+
+            try {
+                const endpoint = apiKey 
+                    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+                    : '/api/generate';
+                const body = apiKey ? { contents: [{ parts: [{ text: prompt }] }] } : { prompt };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error('Respon AI kosong');
+
+                const cleaned = text.replace(/```json|```/g, '').trim();
+                const parsed = JSON.parse(cleaned);
+
+                if (parsed.updatedHtml) {
+                    editor.innerHTML = parsed.updatedHtml;
+                    updateStats();
+                    appendTerminalLog(`<div class="text-emerald-400">✔ Selesai: ${parsed.summary || 'Konten berhasil diperbarui sesuai instruksi.'} <span class="text-slate-500">(ketik 'undo' untuk membatalkan)</span></div>`);
+                    showToast('Konten diperbarui via Terminal!', 'fa-circle-check');
+                } else {
+                    throw new Error('Format respon AI tidak memuat updatedHtml');
+                }
+            } catch (err) {
+                console.error(err);
+                appendTerminalLog(`<div class="text-rose-400">✖ Kesalahan saat memproses: ${err.message || 'Gagal menghubungi AI'}</div>`);
+                showToast('Gagal memproses perintah terminal', 'fa-triangle-exclamation');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Kirim</span><i class="fa-solid fa-arrow-turn-down text-[10px] rotate-90"></i>`;
+            }
         }
 
         // --- Mobile Sidebar Toggle ---
