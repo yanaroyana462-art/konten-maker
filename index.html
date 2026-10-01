@@ -710,7 +710,7 @@
                         .order('created_at', { ascending: false });
 
                     if (error) {
-                        console.error('Supabase fetch error:', error);
+                        console.warn('Supabase fetch error (tabel articles belum dibuat atau RLS belum disetel):', error.message || error);
                     } else if (data && data.length > 0) {
                         remoteArticles = data.map(item => ({
                             id: item.id,
