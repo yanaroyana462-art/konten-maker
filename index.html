@@ -109,7 +109,6 @@
                 <i class="fa-regular fa-bookmark"></i>
                 <span id="bookmarkBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500"></span>
             </button>
-
             <!-- Admin Navigation & Lock Button -->
             <div id="adminNavContainer" class="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-2">
                 <a id="btnAdminDashboard" href="dashboard.html" class="hidden items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition shadow-sm" title="Buka Dashboard Content Maker">
@@ -165,7 +164,7 @@
                     <div id="t-statCategories" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Kategori</div>
                 </div>
                 <div class="text-center p-2">
-                    <div class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">12k+</div>
+                    <div class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400" id="statTotalReaders">12k+</div>
                     <div id="t-statReaders" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Pembaca</div>
                 </div>
             </div>
@@ -223,6 +222,26 @@
                     <span id="count-buletin" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
             </nav>
+
+            <!-- Widget Jumlah Kunjungan User -->
+            <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                <div class="p-3.5 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50/40 dark:from-sky-950/40 dark:to-slate-900 border border-sky-100 dark:border-sky-900/40 space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <span class="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span id="t-userVisitsLabel">Total Kunjungan</span>
+                        </span>
+                        <span class="flex h-2 w-2 relative" title="Aktif">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="sidebarVisitCount" class="text-xl font-extrabold text-slate-900 dark:text-white font-mono">0</span>
+                        <span id="t-userVisitsSub" class="text-[11px] text-slate-500 dark:text-slate-400">tayangan</span>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content Area -->
@@ -671,6 +690,8 @@
                 leadEmailPlaceholder: 'Contoh: nama@email.com',
                 leadBtnSubmit: 'Buka Akses Artikel',
                 leadPrivacy: 'Data Anda tersimpan dengan aman dan hanya digunakan untuk informasi konten terbaru.',
+                userVisitsLabel: 'Total Kunjungan',
+                userVisitsSub: 'tayangan',
                 labelTone: 'Tone',
                 labelSegment: 'Segmen'
             },
@@ -735,6 +756,8 @@
                 leadEmailPlaceholder: 'e.g. name@email.com',
                 leadBtnSubmit: 'Unlock Article Access',
                 leadPrivacy: 'Your data is securely stored and only used for updates on new content.',
+                userVisitsLabel: 'Total Visits',
+                userVisitsSub: 'views',
                 labelTone: 'Tone',
                 labelSegment: 'Audience'
             },
@@ -799,6 +822,8 @@
                 leadEmailPlaceholder: 'مثال: name@email.com',
                 leadBtnSubmit: 'فتح الوصول للمقالات',
                 leadPrivacy: 'بياناتك محفوظة بأمان وتُستخدم فقط لإشعارك بالمحتوى الجديد.',
+                userVisitsLabel: 'إجمالي الزيارات',
+                userVisitsSub: 'مشاهدة',
                 labelTone: 'الأسلوب',
                 labelSegment: 'الجمهور'
             }
@@ -854,6 +879,7 @@
                     source: source,
                     lang: currentLang || 'id'
                 }]);
+                updateVisitStats();
             } catch (err) {
                 console.warn('Gagal mencatat analitik:', err);
             }
@@ -917,6 +943,7 @@
             applyLanguage(currentLang);
 
             await fetchArticles();
+            await updateVisitStats();
             updateStats();
             updateBookmarkBadge();
 
@@ -1008,6 +1035,8 @@
             safeSetText('t-leadEmailLabel', t.leadEmailLabel);
             safeSetText('t-btnSubmitLead', t.leadBtnSubmit);
             safeSetText('t-leadPrivacy', t.leadPrivacy);
+            safeSetText('t-userVisitsLabel', t.userVisitsLabel);
+            safeSetText('t-userVisitsSub', t.userVisitsSub);
             const emailInput = document.getElementById('leadEmailInput');
             if (emailInput) emailInput.placeholder = t.leadEmailPlaceholder;
             const leadInput = document.getElementById('leadNameInput');
@@ -1686,6 +1715,38 @@
         function updateStats() {
             updateCategoryBadges();
             document.getElementById('statTotal').innerText = articles.length;
+        }
+
+        // --- User Visits Counter Sync ---
+        async function updateVisitStats() {
+            let totalViews = 0;
+            if (!sessionStorage.getItem('portal_visited_session')) {
+                let localCount = parseInt(localStorage.getItem('portal_visit_count') || '0', 10) + 1;
+                localStorage.setItem('portal_visit_count', localCount);
+                sessionStorage.setItem('portal_visited_session', '1');
+            }
+
+            if (supabaseClient) {
+                try {
+                    const { count, error } = await supabaseClient
+                        .from('article_views')
+                        .select('*', { count: 'exact', head: true });
+                    if (!error && typeof count === 'number') {
+                        totalViews = count;
+                    }
+                } catch (e) {
+                    console.warn('Gagal membaca hitungan article_views:', e);
+                }
+            }
+
+            const localVisits = parseInt(localStorage.getItem('portal_visit_count') || '0', 10);
+            const finalCount = Math.max(totalViews, localVisits);
+            const formatted = new Intl.NumberFormat(currentLang === 'en' ? 'en-US' : 'id-ID').format(finalCount);
+
+            const sidebarCountEl = document.getElementById('sidebarVisitCount');
+            if (sidebarCountEl) sidebarCountEl.innerText = formatted;
+            const heroReaders = document.getElementById('statTotalReaders');
+            if (heroReaders && finalCount > 0) heroReaders.innerText = formatted;
         }
 
         // --- Toast Notification System ---
