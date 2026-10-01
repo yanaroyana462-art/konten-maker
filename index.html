@@ -110,6 +110,17 @@
                 <span id="bookmarkBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500"></span>
             </button>
 
+            <!-- Admin Navigation & Lock Button -->
+            <div id="adminNavContainer" class="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-2">
+                <a id="btnAdminDashboard" href="dashboard.html" class="hidden items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition shadow-sm" title="Buka Dashboard Content Maker">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <button id="btnAdminLock" onclick="handleAdminButtonClick()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Login Admin">
+                    <i id="adminLockIcon" class="fa-solid fa-lock text-slate-400"></i>
+                </button>
+            </div>
+
             <!-- User Profile & Logout Button -->
             <div id="userProfileBadge" class="hidden flex items-center gap-1.5 sm:gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
                 <div class="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
@@ -375,6 +386,44 @@
                 <p id="t-leadPrivacy" class="text-[10px] text-center text-slate-400 leading-relaxed">
                     Data Anda tersimpan dengan aman dan hanya digunakan untuk keperluan informasi konten terbaru.
                 </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Login PIN Admin -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl space-y-5 relative animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Verifikasi Admin</h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Masukkan PIN/Password khusus admin</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminLoginModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <form id="adminLoginForm" onsubmit="handleAdminLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">PIN / Password Admin</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                        <input type="password" id="adminPinInput" required placeholder="Masukkan PIN admin..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition text-slate-900 dark:text-white font-mono tracking-widest">
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Diverifikasi via Vercel (<code class="font-mono">ADMIN_PIN</code>).</span>
+                </div>
+
+                <div class="pt-1 flex items-center gap-2.5">
+                    <button type="button" onclick="closeAdminLoginModal()" class="w-1/3 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Batal</button>
+                    <button type="submit" id="btnSubmitAdminLogin" class="w-2/3 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-unlock"></i><span>Masuk Admin</span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -861,6 +910,7 @@
             // Cek apakah pengguna sudah mengisi formulir WhatsApp
             checkLeadAccess();
             
+            updateAdminUI();
             // Terapkan bahasa pilihan pengguna
             const langSelect = document.getElementById('langSelector');
             if (langSelect) langSelect.value = currentLang;
@@ -1120,6 +1170,103 @@
             showToast('Permintaan artikel berhasil dikirim!', 'fa-circle-check');
         }
 
+        // --- Admin Authentication & UI Handlers ---
+        function updateAdminUI() {
+            const isAdmin = localStorage.getItem('portal_admin') === '1';
+            const btnDashboard = document.getElementById('btnAdminDashboard');
+            const btnLock = document.getElementById('btnAdminLock');
+            const lockIcon = document.getElementById('adminLockIcon');
+
+            if (isAdmin) {
+                if (btnDashboard) {
+                    btnDashboard.classList.remove('hidden');
+                    btnDashboard.classList.add('flex');
+                }
+                if (lockIcon) lockIcon.className = 'fa-solid fa-lock-open text-emerald-500';
+                if (btnLock) btnLock.title = 'Admin Aktif (Klik untuk Logout Admin)';
+            } else {
+                if (btnDashboard) {
+                    btnDashboard.classList.add('hidden');
+                    btnDashboard.classList.remove('flex');
+                }
+                if (lockIcon) lockIcon.className = 'fa-solid fa-lock text-slate-400';
+                if (btnLock) btnLock.title = 'Login Admin';
+            }
+        }
+
+        function handleAdminButtonClick() {
+            const isAdmin = localStorage.getItem('portal_admin') === '1';
+            if (isAdmin) {
+                if (confirm('Keluar dari mode admin? Akses dashboard dan hak edit/hapus konten akan dinonaktifkan.')) {
+                    localStorage.removeItem('portal_admin');
+                    updateAdminUI();
+                    renderArticles();
+                    showToast('Mode admin dinonaktifkan.', 'fa-lock');
+                }
+            } else {
+                openAdminLoginModal();
+            }
+        }
+
+        function openAdminLoginModal() {
+            const modal = document.getElementById('adminLoginModal');
+            const input = document.getElementById('adminPinInput');
+            if (modal) modal.classList.remove('hidden');
+            if (input) {
+                input.value = '';
+                setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        function closeAdminLoginModal() {
+            const modal = document.getElementById('adminLoginModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleAdminLoginSubmit(event) {
+            event.preventDefault();
+            const pinInput = document.getElementById('adminPinInput');
+            const btn = document.getElementById('btnSubmitAdminLogin');
+            const pin = pinInput ? pinInput.value.trim() : '';
+            if (!pin) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Memverifikasi...</span>`;
+
+            try {
+                const res = await fetch('/api/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    localStorage.setItem('portal_admin', '1');
+                    closeAdminLoginModal();
+                    updateAdminUI();
+                    renderArticles();
+                    showToast('Login berhasil: Mode Admin aktif!', 'fa-shield-halved');
+                } else {
+                    showToast(data.error || 'PIN / Password salah!', 'fa-triangle-exclamation');
+                }
+            } catch (err) {
+                // Fallback darurat jika dijalankan di preview lokal tanpa server vercel
+                if (pin === '123456') {
+                    localStorage.setItem('portal_admin', '1');
+                    closeAdminLoginModal();
+                    updateAdminUI();
+                    renderArticles();
+                    showToast('Mode Admin aktif (mode offline)!', 'fa-shield-halved');
+                } else {
+                    showToast('Gagal memverifikasi ke server', 'fa-triangle-exclamation');
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-unlock"></i><span>Masuk Admin</span>`;
+            }
+        }
+
         // --- Logout Handler ---
         function handleLogout() {
             if (confirm('Apakah Anda yakin ingin keluar? Formulir pendaftaran akan muncul kembali untuk membuka akses artikel.')) {
@@ -1295,6 +1442,7 @@
                 const isRTL = currentLang === 'ar';
                 const artTitle = (currentLang === 'en' && art.title_en) ? art.title_en : (currentLang === 'ar' && art.title_ar) ? art.title_ar : art.title;
                 const artSnippet = (currentLang === 'en' && art.snippet_en) ? art.snippet_en : (currentLang === 'ar' && art.snippet_ar) ? art.snippet_ar : art.snippet;
+                const isAdmin = localStorage.getItem('portal_admin') === '1';
                 return `
                     <article class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:shadow-xl hover:border-sky-500/50 dark:hover:border-sky-500/50 transition-all duration-200 group">
                         <div class="space-y-3">
@@ -1307,12 +1455,13 @@
                                     <button onclick="shareArticle('${art.id}', event)" class="text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 transition" title="Bagikan Cuplikan & Link">
                                         <i class="fa-solid fa-share-nodes"></i>
                                     </button>
+                                    ${isAdmin ? `
                                     <button onclick="editArticle('${art.id}', event)" class="text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 transition" title="Edit Artikel">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
                                     <button onclick="deleteArticle('${art.id}', event)" class="text-slate-400 hover:text-rose-500 p-1.5 transition" title="Hapus Artikel">
                                         <i class="fa-regular fa-trash-can"></i>
-                                    </button>
+                                    </button>` : ''}
                                     <button onclick="toggleBookmark('${art.id}', event)" class="text-slate-400 hover:text-sky-500 p-1.5 transition" title="Simpan ke Favorit">
                                         <i class="${isBookmarked ? 'fa-solid text-sky-500' : 'fa-regular'} fa-bookmark"></i>
                                     </button>
@@ -1417,6 +1566,10 @@
         // --- Article Edit & Delete Actions ---
         function editArticle(id, event) {
             if (event) event.stopPropagation();
+            if (localStorage.getItem('portal_admin') !== '1') {
+                showToast('Hanya admin yang dapat mengedit artikel', 'fa-shield-halved');
+                return;
+            }
             window.location.href = `dashboard.html?id=${encodeURIComponent(id)}`;
         }
 
@@ -1428,6 +1581,10 @@
 
         async function deleteArticle(id, event) {
             if (event) event.stopPropagation();
+            if (localStorage.getItem('portal_admin') !== '1') {
+                showToast('Akses ditolak: Hanya admin yang dapat menghapus konten!', 'fa-shield-halved');
+                return;
+            }
             if (!confirm('Apakah Anda yakin ingin menghapus artikel ini?')) return;
 
             if (supabaseClient) {
