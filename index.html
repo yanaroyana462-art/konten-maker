@@ -280,6 +280,9 @@
                     <button id="btnTTSSpeed" onclick="cycleTTSSpeed()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition font-mono" title="Kecepatan pembacaan suara">
                         1.0x
                     </button>
+                    <select id="ttsVoiceSelect" onchange="changeTTSVoice(this.value)" class="text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer max-w-[140px] truncate" title="Pilih Karakter Suara Pembaca">
+                        <option value="">Suara Default</option>
+                    </select>
                     <div class="flex items-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 text-xs text-slate-600 dark:text-slate-300" title="Atur ukuran teks artikel">
                         <button onclick="adjustFontSize(-1)" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-bold" title="Perkecil huruf">A-</button>
                         <span class="w-px h-3.5 bg-slate-200 dark:bg-slate-800"></span>
@@ -774,6 +777,7 @@
         let ttsIndex = 0;
         const ttsSpeeds = [0.75, 1.0, 1.25, 1.5];
         let ttsSpeedIndex = 1;
+        let selectedVoiceURI = '';
         const fontSizes = ['15px', '18px', '21px', '24px'];
         let currentFontSizeIndex = 1;
 
@@ -873,6 +877,10 @@
                 openModal(articleParam, 'link');
             }
             setupScrollListeners();
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => populateTTSVoices();
+            }
         };
 
         // --- Language Switcher Handler ---
@@ -959,6 +967,7 @@
             const searchMob = document.getElementById('searchInputMobile');
             if (searchDesk) searchDesk.placeholder = t.searchPlaceholder;
             if (searchMob) searchMob.placeholder = t.searchPlaceholder;
+            populateTTSVoices();
         };
 
         // --- Lead Gatekeeper Verification ---
@@ -1373,6 +1382,7 @@
             }
             updateModalBookmarkBtn();
             updateTTSButton();
+            populateTTSVoices();
 
             // Tampilkan detail artikel di dalam halaman, sembunyikan daftar artikel
             const listView = document.getElementById('articlesListView');
@@ -1595,6 +1605,54 @@
             updateTTSButton();
         }
 
+        function populateTTSVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const voiceSelect = document.getElementById('ttsVoiceSelect');
+            if (!voiceSelect) return;
+
+            const voices = window.speechSynthesis.getVoices();
+            const langMap = { id: 'id', en: 'en', ar: 'ar' };
+            const prefix = langMap[currentLang] || 'id';
+
+            const matchingVoices = voices.filter(v => v.lang.toLowerCase().replace('_', '-').startsWith(prefix));
+            voiceSelect.innerHTML = '';
+
+            if (matchingVoices.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Suara Default';
+                voiceSelect.appendChild(opt);
+                return;
+            }
+
+            matchingVoices.forEach((v) => {
+                const opt = document.createElement('option');
+                opt.value = v.voiceURI;
+                let genderTag = '';
+                const lowerName = v.name.toLowerCase();
+                if (lowerName.includes('female') || lowerName.includes('wanita') || lowerName.includes('gadis') || lowerName.includes('zira')) {
+                    genderTag = ' (Wanita)';
+                } else if (lowerName.includes('male') || lowerName.includes('pria') || lowerName.includes('andika') || lowerName.includes('david')) {
+                    genderTag = ' (Pria)';
+                }
+                const cleanName = v.name.replace(/^(Microsoft|Google)\s*/i, '').slice(0, 16);
+                opt.textContent = `${cleanName}${genderTag}`;
+                if (v.voiceURI === selectedVoiceURI) opt.selected = true;
+                voiceSelect.appendChild(opt);
+            });
+
+            if (!selectedVoiceURI || !matchingVoices.some(v => v.voiceURI === selectedVoiceURI)) {
+                selectedVoiceURI = matchingVoices[0].voiceURI;
+                voiceSelect.value = selectedVoiceURI;
+            }
+        }
+
+        function changeTTSVoice(uri) {
+            selectedVoiceURI = uri;
+            showToast('Karakter suara diperbarui', 'fa-microphone');
+            if (isSpeaking) playTTSItem(ttsIndex);
+        }
+
         function updateTTSButton() {
             const btnIcon = document.getElementById('ttsIcon');
             const btnText = document.getElementById('t-btnListen');
@@ -1706,8 +1764,14 @@
 
             const voices = window.speechSynthesis.getVoices();
             if (voices.length > 0) {
-                const matchedVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(targetLangCode.toLowerCase().slice(0, 2)));
-                if (matchedVoice) utterance.voice = matchedVoice;
+                let chosenVoice = null;
+                if (selectedVoiceURI) {
+                    chosenVoice = voices.find(v => v.voiceURI === selectedVoiceURI);
+                }
+                if (!chosenVoice) {
+                    chosenVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(targetLangCode.toLowerCase().slice(0, 2)));
+                }
+                if (chosenVoice) utterance.voice = chosenVoice;
             }
 
             utterance.onend = () => {
