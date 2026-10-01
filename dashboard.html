@@ -324,23 +324,40 @@
         <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 overflow-hidden relative">
 
             <!-- Title & Editor Toolbar -->
-            <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-3 sm:px-6 flex flex-col gap-3 shrink-0">
+            <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-3 sm:px-6 flex flex-col gap-2.5 shrink-0">
                 
-                <!-- Document Title Editable -->
-                <div class="flex items-center justify-between gap-4">
-                    <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" oninput="syncTitleToSidebar(this.value)" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
-                    
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button id="btnTranslateEnglish" onclick="translateCurrentContentToEnglish()" class="text-xs px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 font-medium transition flex items-center gap-1.5" title="Terjemahkan judul dan konten ke Bahasa Inggris menggunakan Gemini AI">
-                            <i class="fa-solid fa-language text-sm"></i> <span class="hidden sm:inline">Terjemahkan ke</span> EN (AI)
+                <!-- 3-Language Input Tabs -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/60 dark:border-slate-800/60">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">Input Bahasa:</span>
+                        <div class="inline-flex p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-xs font-semibold gap-1">
+                            <button type="button" id="tabLang-id" onclick="switchLanguageTab('id')" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm transition flex items-center gap-1.5">
+                                <span>🇮🇩 Indonesia (Utama)</span>
+                                <span id="dot-id" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            </button>
+                            <button type="button" id="tabLang-en" onclick="switchLanguageTab('en')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                                <span>🇬🇧 English</span>
+                                <span id="dot-en" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            </button>
+                            <button type="button" id="tabLang-ar" onclick="switchLanguageTab('ar')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                                <span>🇸🇦 العربية</span>
+                                <span id="dot-ar" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="btnCopyFromId" onclick="copyFromIndonesianDraft()" class="hidden text-xs px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-medium transition items-center gap-1.5" title="Salin draft & struktur dari Bahasa Indonesia sebagai template">
+                            <i class="fa-regular fa-clone text-[11px]"></i> <span>Salin Struktur ID</span>
                         </button>
-                        <button id="btnTranslateArabic" onclick="translateCurrentContentToArabic()" class="text-xs px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 font-medium transition flex items-center gap-1.5" title="Terjemahkan judul dan konten ke Bahasa Arab menggunakan Gemini AI">
-                            <i class="fa-solid fa-language text-sm"></i> <span class="hidden sm:inline">Terjemahkan ke</span> Arab (AI)
-                        </button>
-                        <button onclick="quickInsertCTA()" class="text-xs px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-md hover:bg-sky-100 border border-sky-200 dark:border-sky-800 font-medium transition flex items-center gap-1.5">
+                        <button onclick="quickInsertCTA()" class="text-xs px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/40 border border-sky-200 dark:border-sky-800 font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-plus text-[10px]"></i> Sisip CTA
                         </button>
                     </div>
+                </div>
+                
+                <!-- Document Title Editable -->
+                <div class="flex items-center justify-between gap-4">
+                    <input type="text" id="docTitle" value="Draft Konten Tanpa Judul" oninput="handleDocTitleInput(this.value)" class="bg-transparent font-bold text-lg sm:text-xl text-slate-800 dark:text-slate-100 border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-sky-500 focus:outline-none transition px-1 py-0.5 w-full">
                 </div>
 
                 <!-- Rich Text Formatting Toolbar -->
@@ -373,7 +390,7 @@
             <!-- Main Interactive Editor Workspace -->
             <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
                 <div class="w-full max-w-3xl min-h-full">
-                    <div id="editor" contenteditable="true" data-placeholder="Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'..." oninput="updateStats()" class="editor-content outline-none text-slate-800 dark:text-slate-100 leading-relaxed text-base sm:text-lg min-h-[500px] p-2 space-y-4"></div>
+                    <div id="editor" contenteditable="true" data-placeholder="Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'..." oninput="handleEditorInput()" class="editor-content outline-none text-slate-800 dark:text-slate-100 leading-relaxed text-base sm:text-lg min-h-[500px] p-2 space-y-4"></div>
                 </div>
             </div>
 
@@ -456,6 +473,14 @@
         let terminalHistory = [];
         let terminalHistoryIndex = -1;
         let editorUndoSnapshot = null;
+        
+        // Multilingual manual state
+        let currentLangTab = 'id';
+        let multilingualData = {
+            id: { title: '', content: '' },
+            en: { title: '', content: '' },
+            ar: { title: '', content: '' }
+        };
 
         // Setup PDF.js worker
         if (window.pdfjsLib) {
@@ -473,6 +498,7 @@
 
         // Initial setup
         window.onload = async function() {
+            updateLanguageBadges();
             updateStats();
             await loadBooksFromSupabase();
             const savedKey = localStorage.getItem('gemini_api_key');
@@ -685,6 +711,7 @@ ATURAN:
                 if (parsed.updatedHtml) {
                     editor.innerHTML = parsed.updatedHtml;
                     updateStats();
+                    saveActiveLanguageState();
                     appendTerminalLog(`<div class="text-emerald-400">✔ Selesai: ${parsed.summary || 'Konten berhasil diperbarui sesuai instruksi.'} <span class="text-slate-500">(ketik 'undo' untuk membatalkan)</span></div>`);
                     showToast('Konten diperbarui via Terminal!', 'fa-circle-check');
                 } else {
@@ -706,15 +733,120 @@ ATURAN:
             sidebarBackdrop.classList.toggle('hidden');
         }
 
+        // --- Multilingual Manual Input Functions ---
+        function saveActiveLanguageState() {
+            const titleVal = document.getElementById('docTitle').value.trim();
+            const contentVal = editor.innerHTML.trim();
+            multilingualData[currentLangTab] = {
+                title: titleVal === 'Draft Konten Tanpa Judul' ? '' : titleVal,
+                content: contentVal
+            };
+            updateLanguageBadges();
+        }
+
+        function handleDocTitleInput(val) {
+            if (currentLangTab === 'id') {
+                syncTitleToSidebar(val);
+            }
+            saveActiveLanguageState();
+        }
+
+        function handleEditorInput() {
+            updateStats();
+            saveActiveLanguageState();
+        }
+
+        function updateLanguageBadges() {
+            ['id', 'en', 'ar'].forEach(lang => {
+                const dot = document.getElementById(`dot-${lang}`);
+                if (!dot) return;
+                const hasData = (multilingualData[lang]?.title && multilingualData[lang].title.trim() !== '') ||
+                                (multilingualData[lang]?.content && multilingualData[lang].content.trim() !== '');
+                if (hasData) {
+                    dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-sm';
+                } else {
+                    dot.className = 'w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600';
+                }
+            });
+        }
+
+        function switchLanguageTab(lang) {
+            saveActiveLanguageState();
+            currentLangTab = lang;
+
+            ['id', 'en', 'ar'].forEach(l => {
+                const tabBtn = document.getElementById(`tabLang-${l}`);
+                if (!tabBtn) return;
+                if (l === lang) {
+                    tabBtn.className = 'px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm transition flex items-center gap-1.5 font-bold';
+                } else {
+                    tabBtn.className = 'px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5';
+                }
+            });
+
+            const btnCopy = document.getElementById('btnCopyFromId');
+            if (btnCopy) {
+                if (lang === 'id') {
+                    btnCopy.classList.add('hidden');
+                    btnCopy.classList.remove('flex');
+                } else {
+                    btnCopy.classList.remove('hidden');
+                    btnCopy.classList.add('flex');
+                }
+            }
+
+            const docTitle = document.getElementById('docTitle');
+            const loadedTitle = multilingualData[lang]?.title || '';
+            docTitle.value = loadedTitle || (lang === 'id' ? 'Draft Konten Tanpa Judul' : '');
+            editor.innerHTML = multilingualData[lang]?.content || '';
+
+            if (lang === 'ar') {
+                editor.setAttribute('dir', 'rtl');
+                docTitle.setAttribute('dir', 'rtl');
+                docTitle.placeholder = 'عنوان المقال بالعربية...';
+                editor.setAttribute('data-placeholder', 'اكتب المقال باللغة العربية هنا...');
+            } else {
+                editor.setAttribute('dir', 'ltr');
+                docTitle.setAttribute('dir', 'ltr');
+                docTitle.placeholder = lang === 'en' ? 'English Article Title...' : 'Judul Artikel (Indonesia)...';
+                editor.setAttribute('data-placeholder', lang === 'en' ? 'Write article content in English here...' : "Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'...");
+            }
+
+            if (lang === 'id') {
+                syncTitleToSidebar(loadedTitle);
+            }
+            updateStats();
+            updateLanguageBadges();
+        }
+
+        function copyFromIndonesianDraft() {
+            saveActiveLanguageState();
+            if (!multilingualData.id.content && !editor.innerHTML.trim()) {
+                showToast('Draft Bahasa Indonesia masih kosong!', 'fa-triangle-exclamation');
+                return;
+            }
+            editor.innerHTML = multilingualData.id.content;
+            const docTitle = document.getElementById('docTitle');
+            if (!docTitle.value.trim() && multilingualData.id.title) {
+                docTitle.value = multilingualData.id.title;
+            }
+            saveActiveLanguageState();
+            updateStats();
+            showToast('Struktur draft Bahasa Indonesia disalin!', 'fa-clone');
+        }
+
         // --- Two-way Title Synchronization ---
         function syncTitleToEditor(val) {
             const docTitle = document.getElementById('docTitle');
-            if (docTitle) docTitle.value = val || 'Draft Konten Tanpa Judul';
+            if (docTitle && currentLangTab === 'id') {
+                docTitle.value = val || 'Draft Konten Tanpa Judul';
+                saveActiveLanguageState();
+            }
         }
 
         function syncTitleToSidebar(val) {
             const paramTitle = document.getElementById('paramTitle');
-            if (paramTitle) paramTitle.value = val;
+            if (paramTitle && currentLangTab === 'id') paramTitle.value = val;
         }
 
         // --- Load & Apply User Article Requests ---
@@ -1057,9 +1189,19 @@ ATURAN:
             }
 
             if (article) {
-                document.getElementById('docTitle').value = article.title || '';
+                multilingualData = {
+                    id: { title: article.title || '', content: article.content || '' },
+                    en: { title: article.title_en || '', content: article.content_en || '' },
+                    ar: { title: article.title_ar || '', content: article.content_ar || '' }
+                };
+                currentLangTab = 'id';
+                switchLanguageTab('id');
+
+                const docTitle = document.getElementById('docTitle');
+                if (docTitle) docTitle.value = article.title || '';
                 const paramTitle = document.getElementById('paramTitle');
                 if (paramTitle) paramTitle.value = article.title || '';
+
                 editor.innerHTML = article.content || '';
                 if (article.category) {
                     const catSelect = document.getElementById('paramCategory');
@@ -1070,6 +1212,7 @@ ATURAN:
                     if (toneRadio) toneRadio.checked = true;
                 }
                 updateStats();
+                updateLanguageBadges();
                 showToast('Mode Edit: Silakan perbarui konten Anda.', 'fa-pen-to-square');
             } else {
                 showToast('Artikel tidak ditemukan!', 'fa-triangle-exclamation');
@@ -1082,6 +1225,7 @@ ATURAN:
             if (editor.innerText.trim().length > 0) {
                 if (confirm('Apakah Anda yakin ingin mengosongkan editor?')) {
                     editor.innerHTML = '';
+                    saveActiveLanguageState();
                     updateStats();
                     showToast('Editor telah dikosongkan', 'fa-trash-can');
                 }
@@ -1158,180 +1302,6 @@ ${innerHTML.trim()}
             editor.innerHTML += ctaHTML;
             updateStats();
             showToast('CTA berhasil disisipkan');
-        }
-
-        // --- Translate Current Content to Arabic with Gemini AI ---
-        async function translateCurrentContentToArabic() {
-            const rawText = editor.innerText.trim();
-            const currentTitle = document.getElementById('docTitle').value.trim();
-
-            if (!rawText) {
-                showToast('Tidak ada konten di editor untuk diterjemahkan!', 'fa-triangle-exclamation');
-                return;
-            }
-
-            const btn = document.getElementById('btnTranslateArabic');
-            const originalBtnHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menerjemahkan...</span>`;
-            showToast('Menerjemahkan artikel ke bahasa Arab...', 'fa-spinner fa-spin');
-
-            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
-            const prompt = `Anda adalah penerjemah profesional bahasa Arab (Fusha/Modern Standard Arabic).
-Tugas Anda adalah menerjemahkan judul dan konten HTML berikut ke dalam bahasa Arab yang fasih, alami, dan baku.
-
-ATURAN:
-1. Pertahankan semua format struktur HTML (misalnya <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
-2. Terjemahkan judul dan isi konten secara akurat.
-3. Kembalikan HANYA format JSON valid tanpa tanda kutip markdown (\`\`\`json):
-{
-  "translatedTitle": "Judul terjemahan bahasa Arab",
-  "translatedHtml": "Konten HTML lengkap terjemahan bahasa Arab"
-}
-
-Judul Asli:
-${currentTitle}
-
-Konten HTML Asli:
-${editor.innerHTML}`;
-
-            try {
-                let response;
-                if (apiKey) {
-                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                } else {
-                    response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt })
-                    });
-                }
-
-                const rawText = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(rawText);
-                } catch (e) {
-                    throw new Error(`Endpoint API mengembalikan status ${response.status}. Pastikan GEMINI_API_KEY terpasang di Vercel atau masukkan API key di sidebar.`);
-                }
-                if (!response.ok) throw new Error(data.error?.message || data.error || `HTTP ${response.status}`);
-                const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!textResult) throw new Error('Respon Gemini kosong atau tidak valid.');
-
-                const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
-                const parsed = JSON.parse(cleanedJSON);
-
-                if (parsed.translatedTitle) {
-                    document.getElementById('docTitle').value = parsed.translatedTitle;
-                    const paramTitle = document.getElementById('paramTitle');
-                    if (paramTitle) paramTitle.value = parsed.translatedTitle;
-                }
-                if (parsed.translatedHtml) {
-                    editor.innerHTML = parsed.translatedHtml;
-                    editor.setAttribute('dir', 'rtl');
-                }
-
-                document.getElementById('paramLanguage').value = 'ar';
-                updateStats();
-                showToast('Konten berhasil diterjemahkan ke Bahasa Arab!', 'fa-circle-check');
-            } catch (err) {
-                console.error('Gagal menerjemahkan via Gemini:', err);
-                showToast('Gagal menerjemahkan konten: ' + (err.message || 'Error'), 'fa-triangle-exclamation');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalBtnHTML;
-            }
-        }
-
-        // --- Translate Current Content to English with Gemini AI ---
-        async function translateCurrentContentToEnglish() {
-            const rawText = editor.innerText.trim();
-            const currentTitle = document.getElementById('docTitle').value.trim();
-
-            if (!rawText) {
-                showToast('Tidak ada konten di editor untuk diterjemahkan!', 'fa-triangle-exclamation');
-                return;
-            }
-
-            const btn = document.getElementById('btnTranslateEnglish');
-            const originalBtnHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menerjemahkan...</span>`;
-            showToast('Menerjemahkan artikel ke bahasa Inggris...', 'fa-spinner fa-spin');
-
-            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
-            const prompt = `You are a professional English editor and translator.
-Your task is to translate the following title and HTML content into fluent, natural, and standard English.
-
-RULES:
-1. Strictly preserve all existing HTML structure and tags (such as <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
-2. Translate both title and body accurately.
-3. Return ONLY a valid JSON object without markdown code blocks (\`\`\`json):
-{
-  "translatedTitle": "Translated English Title",
-  "translatedHtml": "Full translated HTML content in English"
-}
-
-Original Title:
-${currentTitle}
-
-Original HTML Content:
-${editor.innerHTML}`;
-
-            try {
-                let response;
-                if (apiKey) {
-                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                } else {
-                    response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt })
-                    });
-                }
-
-                const rawText = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(rawText);
-                } catch (e) {
-                    throw new Error(`Endpoint API mengembalikan status ${response.status}. Pastikan GEMINI_API_KEY terpasang di Vercel atau masukkan API key di sidebar.`);
-                }
-                if (!response.ok) throw new Error(data.error?.message || data.error || `HTTP ${response.status}`);
-                const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!textResult) throw new Error('Respon Gemini kosong atau tidak valid.');
-
-                const cleanedJSON = textResult.replace(/```json|```/g, '').trim();
-                const parsed = JSON.parse(cleanedJSON);
-
-                if (parsed.translatedTitle) {
-                    document.getElementById('docTitle').value = parsed.translatedTitle;
-                    const paramTitle = document.getElementById('paramTitle');
-                    if (paramTitle) paramTitle.value = parsed.translatedTitle;
-                }
-                if (parsed.translatedHtml) {
-                    editor.innerHTML = parsed.translatedHtml;
-                    editor.setAttribute('dir', 'ltr');
-                }
-
-                document.getElementById('paramLanguage').value = 'en';
-                updateStats();
-                showToast('Konten berhasil diterjemahkan ke Bahasa Inggris!', 'fa-circle-check');
-            } catch (err) {
-                console.error('Gagal menerjemahkan via Gemini:', err);
-                showToast('Gagal menerjemahkan konten: ' + (err.message || 'Error'), 'fa-triangle-exclamation');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalBtnHTML;
-            }
         }
 
         // --- Reset Sidebar Parameters ---
@@ -1452,6 +1422,7 @@ ${contextText}`;
                     } else {
                         editor.setAttribute('dir', 'ltr');
                     }
+                    saveActiveLanguageState();
                     updateStats();
                     showToast('Draft berhasil dibuat oleh Gemini AI!', 'fa-circle-check');
 
@@ -1485,65 +1456,24 @@ ${contextText}`;
             }
         });
 
-        // --- Auto Translation Generator for Publishing ---
-        async function fetchAutoTranslations(title, contentHtml, snippet) {
-            const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
-            const prompt = `Anda adalah penerjemah sastra & editor profesional multibahasa (Bahasa Indonesia ke English dan Modern Standard Arabic / Fusha).
-Terjemahkan judul, cuplikan ringkas (snippet), dan konten HTML berikut ke bahasa Inggris dan bahasa Arab dengan gaya bahasa yang alami, mengalir, dan baku.
-
-ATURAN:
-1. Pertahankan persis seluruh tag HTML (seperti <h2>, <h3>, <p>, <ul>, <li>, <strong>, <blockquote>).
-2. Kembalikan HANYA JSON valid tanpa blok markdown (\`\`\`json):
-{
-  "en": {
-    "title": "Translated English Title",
-    "snippet": "English short summary snippet",
-    "content": "Full English HTML content"
-  },
-  "ar": {
-    "title": "عنوان المقال بالعربية",
-    "snippet": "مقتطف قصير بالعربية",
-    "content": "محتوى المقال الكامل بتنسيق HTML بالعربية"
-  }
-}
-
-Judul Asli:
-${title}
-
-Cuplikan Asli:
-${snippet}
-
-Konten HTML Asli:
-${contentHtml}`;
-
-            const endpoint = apiKey 
-                ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-                : '/api/generate';
-            const body = apiKey ? { contents: [{ parts: [{ text: prompt }] }] } : { prompt };
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!response.ok) return { en: null, ar: null };
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) return { en: null, ar: null };
-            const cleaned = text.replace(/```json|```/g, '').trim();
-            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) return { en: null, ar: null };
-            return JSON.parse(jsonMatch[0]);
+        // --- Helper to extract snippet from HTML ---
+        function extractSnippet(html) {
+            if (!html) return '';
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const txt = (temp.textContent || temp.innerText || '').trim().replace(/\s+/g, ' ');
+            return txt.length > 140 ? txt.slice(0, 140) + '...' : txt;
         }
 
         // --- Publish Content to Portal (index.html) ---
         async function publishToPortal() {
-            const title = document.getElementById('docTitle').value.trim();
-            const rawText = editor.innerText.trim();
-            const contentHTML = editor.innerHTML.trim();
+            saveActiveLanguageState();
 
-            if (!rawText || rawText === '') {
-                showToast('Konten masih kosong, belum bisa dipublikasikan!', 'fa-triangle-exclamation');
+            const idTitle = (multilingualData.id.title || document.getElementById('docTitle').value.trim());
+            const idContent = multilingualData.id.content || editor.innerHTML.trim();
+
+            if (!idContent || idContent === '' || idContent === '<p></p>') {
+                showToast('Konten Bahasa Indonesia (Utama) masih kosong!', 'fa-triangle-exclamation');
                 return;
             }
 
@@ -1554,9 +1484,11 @@ ${contentHtml}`;
             const audienceSelect = document.getElementById('paramAudience');
             const audienceLabel = audienceSelect.options[audienceSelect.selectedIndex].text.replace(/^[^\s]+\s/, '');
 
-            const words = rawText.split(/\s+/).filter(w => w.length > 0).length;
+            const snippet = extractSnippet(idContent);
+            const tempEl = document.createElement('div');
+            tempEl.innerHTML = idContent;
+            const words = (tempEl.textContent || tempEl.innerText || '').split(/\s+/).filter(w => w.length > 0).length;
             const readTime = Math.max(1, Math.ceil(words / 200));
-            const snippet = rawText.length > 140 ? rawText.slice(0, 140).replace(/\s+/g, ' ') + '...' : rawText;
 
             const dateFormatted = new Date().toLocaleDateString('id-ID', {
                 day: 'numeric',
@@ -1565,7 +1497,7 @@ ${contentHtml}`;
             });
 
             const newArticle = {
-                title: title || 'Draft Konten Baru',
+                title: idTitle || 'Draft Konten Baru',
                 category: category,
                 categoryLabel: categoryLabel,
                 tone: tone,
@@ -1573,32 +1505,18 @@ ${contentHtml}`;
                 words: words,
                 readTime: readTime,
                 date: dateFormatted,
-                snippet: snippet,
-                content: contentHTML
+                snippet: snippet || '',
+                content: idContent,
+                title_en: multilingualData.en.title ? multilingualData.en.title.trim() : null,
+                snippet_en: extractSnippet(multilingualData.en.content) || null,
+                content_en: multilingualData.en.content ? multilingualData.en.content.trim() : null,
+                title_ar: multilingualData.ar.title ? multilingualData.ar.title.trim() : null,
+                snippet_ar: extractSnippet(multilingualData.ar.content) || null,
+                content_ar: multilingualData.ar.content ? multilingualData.ar.content.trim() : null
             };
 
             const btnPublish = document.getElementById('btnPublish');
             const originalBtnHTML = btnPublish ? btnPublish.innerHTML : '';
-
-            // Terjemahkan otomatis ke Bahasa Inggris & Arab jika bahasa artikel adalah ID
-            let translations = { en: null, ar: null };
-            if (btnPublish) {
-                btnPublish.disabled = true;
-                btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Menerjemahkan AI...</span>`;
-            }
-            showToast('Menerjemahkan otomatis ke EN & AR...', 'fa-language');
-            try {
-                translations = await fetchAutoTranslations(newArticle.title, newArticle.content, newArticle.snippet);
-            } catch (err) {
-                console.warn('Gagal menerjemahkan otomatis, melanjutkan dengan bahasa utama:', err);
-            }
-
-            newArticle.title_en = translations.en?.title || null;
-            newArticle.snippet_en = translations.en?.snippet || null;
-            newArticle.content_en = translations.en?.content || null;
-            newArticle.title_ar = translations.ar?.title || null;
-            newArticle.snippet_ar = translations.ar?.snippet || null;
-            newArticle.content_ar = translations.ar?.content || null;
 
             if (supabaseClient) {
                 if (btnPublish) {
