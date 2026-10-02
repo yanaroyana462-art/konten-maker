@@ -97,11 +97,10 @@ export default async function handler(req, res) {
         if (resource === 'articles' && req.method === 'POST') {
             const article = articlePayload(parseBody(req));
             if (!article.title?.trim() || !article.content?.trim()) return sendError(res, 400, 'Judul dan konten wajib diisi.');
-            const saved = await supabaseRequest('articles', {
+            const saved = await saveWithSchemaFallback('articles', {
                 method: 'POST',
-                headers: { Prefer: 'return=representation' },
-                body: JSON.stringify(article)
-            });
+                headers: { Prefer: 'return=representation' }
+            }, article);
             return res.status(201).json(saved?.[0] || saved);
         }
 
@@ -121,11 +120,28 @@ export default async function handler(req, res) {
                 return article;
             });
             if (!articles.length) return sendError(res, 400, 'Tidak ada artikel lokal yang valid untuk diimpor.');
-            await supabaseRequest('articles?on_conflict=id', {
-                method: 'POST',
-                headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-                body: JSON.stringify(articles)
-            });
+            try {
+                await saveWithSchemaFallback('articles?on_conflict=id', {
+                    method: 'POST',
+                    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }
+                }, articles);
+            } catch (err) {
+                if (err.message && err.message.includes('column "id"')) {
+                    // Jika tabel di Postgres menggunakan GENERATED ALWAYS AS IDENTITY,
+                    // buang id eksplisit agar Supabase membuat id secara otomatis.
+                    const articlesWithoutId = articles.map(item => {
+                        const copy = { ...item };
+                        delete copy.id;
+                        return copy;
+                    });
+                    await saveWithSchemaFallback('articles', {
+                        method: 'POST',
+                        headers: { Prefer: 'return=minimal' }
+                    }, articlesWithoutId);
+                } else {
+                    throw err;
+                }
+            }
             return res.status(200).json({ imported: articles.length });
         }
 
@@ -152,11 +168,10 @@ export default async function handler(req, res) {
 
         if (resource === 'articles' && req.method === 'PATCH' && id) {
             const article = articlePayload(parseBody(req));
-            const saved = await supabaseRequest(`articles?id=eq.${encodeURIComponent(id)}`, {
+            const saved = await saveWithSchemaFallback(`articles?id=eq.${encodeURIComponent(id)}`, {
                 method: 'PATCH',
-                headers: { Prefer: 'return=representation' },
-                body: JSON.stringify(article)
-            });
+                headers: { Prefer: 'return=representation' }
+            }, article);
             if (!saved?.length) return sendError(res, 404, 'Artikel tidak ditemukan.');
             return res.status(200).json(saved[0]);
         }
