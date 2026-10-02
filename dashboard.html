@@ -1364,10 +1364,44 @@ ${innerHTML.trim()}
             showToast('Menghubungi Gemini AI...', 'fa-spinner fa-spin');
 
             const targetLang = language === 'ar' ? 'Arab (Fusha/Modern Standard Arabic)' : (language === 'en' ? 'Inggris' : 'Indonesia');
-            let prompt = `Anda adalah penulis profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
+            let prompt = `Anda adalah editor konten profesional. Buatlah ${category} dalam bahasa ${targetLang} dengan tone ${tone} untuk audiens ${audience}. Target panjang sekitar ${length} kata.
 JUDUL: ${paramTitleVal || 'Buatlah judul yang menarik dan relevan'}
 TOPIK: ${ref}
-KATA KUNCI: ${keywords || '-'}`;
+KATA KUNCI: ${keywords || '-'}
+
+INSTRUKSI TAMPILAN & STRUKTUR ARTIKEL:
+1. Tulis konten sebagai HTML murni yang siap ditampilkan di portal website.
+2. Gunakan struktur yang rapi dan gampang dibaca:
+   - <h2> judul utama
+   - <p class="lead"> paragraf pembuka yang kuat
+   - <h3> subjudul pendukung
+   - <p> paragraf isi yang ringkas dan jelas
+   - <ul> / <li> untuk poin-poin penting
+   - <blockquote class="note"> kutipan atau catatan penting
+   - <div class="summary-box"> blok kesimpulan / takeaway
+   - <div class="cta-box"> ajakan bertindak di akhir artikel
+3. Variasikan layout agar tampil lebih dinamis dan profesional, bukan paragraf panjang yang monoton.
+4. Gunakan highlight visual seperti <strong>, <em>, dan <span class="key-point"> untuk menonjolkan ide utama.
+5. Jika artikel berbahasa Arab atau memuat kutipan Arab, gunakan kelas CSS khusus: class="arabic-text" dan atribut dir="rtl" pada elemen yang berisi teks Arab.
+6. Untuk teks non-Arab, gunakan kelas body-text atau cukup paragraf normal dengan dir="ltr" bila perlu.
+7. Pastikan paragraf pendek, alinea terpisah jelas, dan ada jeda antar bagian agar nyaman dibaca.
+8. Hindari output yang terlalu padat atau seperti satu blok teks besar.
+9. Jangan gunakan markdown, jangan gunakan kode fence, dan jangan sertakan komentar HTML.
+
+FORMAT WAJIB OUTPUT:
+- Hanya HTML valid.
+- Gunakan tag semantik yang umum: h2, h3, p, ul, li, blockquote, div, strong, em, span.
+- Struktur HTML harus masuk akal di portal berita/blog.
+- Pastikan setiap blok punya tujuan: pembuka, isi, poin penting, kutipan, penutup, CTA.
+- Untuk bahasa Arab, sertakan tulisan Arab dalam elemen dengan class="arabic-text" dir="rtl" untuk gaya yang lebih elegan dan mudah dibaca.
+- Untuk kesimpulan, buat blok khusus seperti: <div class="summary-box"><strong>Kesimpulan:</strong> ... </div>
+- Untuk ajakan akhir, buat: <div class="cta-box"><strong>Action:</strong> ... </div>
+
+TONE DAN KUALITAS:
+- Buat gaya ${tone} untuk audiens ${audience}.
+- Gunakan bahasa yang jelas, kuat, dan relevan untuk tema ${ref}.
+- Jika konteks membahas konsep atau argumentasi, buat ringkasan yang mudah diingat.
+- Jangan membuat teks generik tanpa kedalaman.`;
 
             if (contextText) {
                 prompt += `\n\nATURAN KETAT RAG:
@@ -1380,10 +1414,10 @@ ${contextText}`;
             }
 
             if (cta === 'yes') {
-                prompt += `\n\nSertakan Call to Action (CTA) yang menarik di akhir konten.`;
+                prompt += `\n\nSertakan Call to Action (CTA) yang menarik di akhir konten. Pastikan CTA dibuat sebagai blok <div class="cta-box"> dengan gaya jelas dan ringkas.`;
             }
 
-            prompt += `\n\nFormat output: Hanya HTML murni (gunakan tag <h2>, <h3>, <p>, <ul>, <li>, <blockquote>, tanpa markdown \`\`\`html).`;
+            prompt += `\n\nFormat output akhir: Hanya HTML murni valid, siap tampil di portal, tanpa markdown \`\`\`html.`;
 
             try {
                 let response;
