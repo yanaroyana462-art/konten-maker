@@ -1,6 +1,6 @@
 // Konfigurasi model AI terpusat
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash';
 
 function getGeminiUrl(model, key) {
     return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
@@ -20,10 +20,14 @@ export default async function handler(req, res) {
         }
     }
 
-    // Gunakan apiKey dari client jika dikirim, atau fallback ke Environment Variable server
-    const apiKey = (body?.apiKey && typeof body.apiKey === 'string') ? body.apiKey.trim() : process.env.GEMINI_API_KEY;
+    // UTAMAKAN Environment Variable Vercel dulu, baru ambil dari client jika env Vercel kosong
+    let rawKey = process.env.GEMINI_API_KEY || body?.apiKey;
+    const apiKey = (typeof rawKey === 'string') ? rawKey.trim() : '';
+
     if (!apiKey) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY belum dikonfigurasi di Environment Variables Vercel atau form.' });
+        return res.status(500).json({ 
+            error: 'GEMINI_API_KEY belum dikonfigurasi di Environment Variables Vercel atau input form.' 
+        });
     }
 
     const { prompt } = body || {};
@@ -36,23 +40,33 @@ export default async function handler(req, res) {
     });
 
     try {
-        const response = await fetch(getGeminiUrl(DEFAULT_MODEL, apiKey), {
+        let response = await fetch(getGeminiUrl(DEFAULT_MODEL, apiKey), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: requestBody
         });
 
-        const data = await response.json();
+        let data = await response.json();
+
+        // Fallback jika model utama 404 (Not Found)
         if (!response.ok && response.status === 404) {
-            // Fallback ke model cadangan jika model utama tidak tersedia
-            const fallbackRes = await fetch(getGeminiUrl(FALLBACK_MODEL, apiKey), {
+            console.warn(`[Gemini API] Model ${DEFAULT_MODEL} 404, mencoba fallback ke ${FALLBACK_MODEL}...`);
+            response = await fetch(getGeminiUrl(FALLBACK_MODEL, apiKey), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: requestBody
             });
-            return res.status(fallbackRes.status).json(await fallbackRes.json());
+            data = await response.json();
         }
-        return res.status(response.status).json(data);
+
+        // Jika API Key tidak valid / Error 400
+        if (!response.ok) {
+            return res.status(response.status).json({
+                error: data.error?.message || `Gemini API Error (HTTP ${response.status})`
+            });
+        }
+
+        return res.status(200).json(data);
     } catch (err) {
         return res.status(500).json({
             error: err.message || 'Terjadi kesalahan internal pada server'
