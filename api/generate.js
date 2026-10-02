@@ -8,15 +8,22 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'GEMINI_API_KEY belum dikonfigurasi di Environment Variables Vercel.' });
     }
 
-    const { prompt } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch {
+            return res.status(400).json({ error: 'Format JSON request tidak valid.' });
+        }
+    }
+    const { prompt } = body || {};
     if (!prompt) {
         return res.status(400).json({ error: 'Prompt tidak boleh kosong.' });
     }
 
     try {
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
-       
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -28,8 +35,8 @@ export default async function handler(req, res) {
 
         const data = await response.json();
         if (!response.ok && response.status === 404) {
-            // Fallback ke model gemini-1.5-flash jika model 2.5 belum aktif
-            const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+            // Fallback ke model gemini-1.5-flash jika model 2.0 tidak tersedia
+            const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
