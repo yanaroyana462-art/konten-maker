@@ -1,6 +1,6 @@
 // Konfigurasi model AI terpusat
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash';
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash';
 
 function getGeminiUrl(model, key) {
     return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
