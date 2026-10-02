@@ -754,15 +754,10 @@ ATURAN:
 2. Pertahankan struktur HTML yang rapi (<h2>, <h3>, <p>, <ul>, <li>, <blockquote>).`;
 
             try {
-                const endpoint = apiKey 
-                    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-                    : '/api/generate';
-                const body = apiKey ? { contents: [{ parts: [{ text: prompt }] }] } : { prompt };
-
-                const response = await fetch(endpoint, {
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({ prompt, apiKey: apiKey || undefined })
                 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
@@ -1497,20 +1492,11 @@ ${contextText}`;
             prompt += `\n\nFormat output akhir: Hanya HTML murni valid, siap tampil di portal, tanpa markdown \`\`\`html.`;
 
             try {
-                let response;
-                if (apiKey) {
-                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                } else {
-                    response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt })
-                    });
-                }
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, apiKey: apiKey || undefined })
+                });
 
                 const rawText = await response.text();
                 let data;
