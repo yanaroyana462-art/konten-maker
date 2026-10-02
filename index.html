@@ -953,20 +953,13 @@
             }
         }
 
-        // --- Fetch Articles (Supabase with LocalStorage Fallback) ---
+        // --- Fetch Articles from Supabase ---
         async function fetchArticles() {
-            let remoteArticles = [];
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('articles')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-
-                    if (error) {
-                        console.warn('Supabase fetch error (tabel articles belum dibuat atau RLS belum disetel):', error.message || error);
-                    } else if (data && data.length > 0) {
-                        remoteArticles = data.map(item => ({
+            try {
+                const response = await fetch('/api/content?resource=articles');
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                articles = result.map(item => ({
                             id: item.id,
                             title: item.title,
                             category: item.category,
@@ -985,16 +978,11 @@
                             snippet_ar: item.snippet_ar || null,
                             content_ar: item.content_ar || null
                         }));
-                    }
-                } catch (err) {
-                    console.error('Supabase connection error:', err);
-                }
+            } catch (err) {
+                console.error('Gagal memuat artikel dari Supabase:', err);
+                articles = [];
+                showToast('Artikel gagal dimuat dari Supabase: ' + err.message, 'fa-triangle-exclamation');
             }
-
-            const deletedIds = JSON.parse(localStorage.getItem('portal_deleted_ids') || '[]');
-            const storedArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
-            articles = (remoteArticles.length > 0 ? remoteArticles : storedArticles)
-                .filter(a => !deletedIds.some(dId => String(dId) === String(a.id)));
         }
 
         // --- Initialization ---
@@ -1241,31 +1229,24 @@
                 created_at: new Date().toISOString()
             };
 
-            // 1. Simpan ke Supabase jika client tersedia
-            if (supabaseClient) {
-                try {
-                    await supabaseClient.from('article_requests').insert([{
-                        title: requestItem.title,
-                        theme: requestItem.theme,
-                        tone: requestItem.tone,
-                        user_name: requestItem.user_name,
-                        user_phone: requestItem.user_phone
-                    }]);
-                } catch (err) {
-                    console.warn('Gagal simpan ke Supabase article_requests:', err);
-                }
+            try {
+                const response = await fetch('/api/content?resource=requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestItem)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                closeRequestModal();
+                document.getElementById('articleRequestForm').reset();
+                showToast('Permintaan artikel berhasil dikirim!', 'fa-circle-check');
+            } catch (err) {
+                console.error('Gagal mengirim permintaan ke Supabase:', err);
+                showToast('Permintaan gagal disimpan: ' + err.message, 'fa-triangle-exclamation');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Kirim Permintaan</span>`;
             }
-
-            // 2. Simpan ke LocalStorage agar dashboard bisa membaca langsung
-            const reqs = JSON.parse(localStorage.getItem('article_requests') || '[]');
-            reqs.unshift(requestItem);
-            localStorage.setItem('article_requests', JSON.stringify(reqs));
-
-            btn.disabled = false;
-            btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Kirim Permintaan</span>`;
-            closeRequestModal();
-            document.getElementById('articleRequestForm').reset();
-            showToast('Permintaan artikel berhasil dikirim!', 'fa-circle-check');
         }
 
         // --- Donation / Infaq Modal Handlers ---
@@ -1808,12 +1789,17 @@ ${art.content}`;
                     modalBody.innerHTML = lang === 'en' ? art.content_en : art.content_ar;
                 }
 
-                // Sinkronkan ke Supabase jika client aktif
-                if (supabaseClient && String(art.id).length > 5) {
+                // Simpan terjemahan ke cloud hanya saat sesi admin aktif.
+                if (isAdmin && String(art.id).length > 5) {
                     const updatePayload = lang === 'en'
                         ? { title_en: art.title_en, content_en: art.content_en, snippet_en: art.snippet_en }
                         : { title_ar: art.title_ar, content_ar: art.content_ar, snippet_ar: art.snippet_ar };
-                    supabaseClient.from('articles').update(updatePayload).eq('id', art.id).then();
+                    const response = await fetch(`/api/content?resource=articles&id=${encodeURIComponent(art.id)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatePayload)
+                    });
+                    if (!response.ok) console.warn('Terjemahan gagal disimpan ke Supabase:', await response.text());
                 }
                 renderArticles();
                 showToast(`Artikel berhasil diterjemahkan ke ${targetName}!`, 'fa-circle-check');
@@ -1858,29 +1844,17 @@ ${art.content}`;
             }
             if (!confirm('Apakah Anda yakin ingin menghapus artikel ini?')) return;
 
-            if (supabaseClient) {
-                showToast('Menghapus artikel...', 'fa-spinner fa-spin');
-                try {
-                    const { error } = await supabaseClient.from('articles').delete().eq('id', String(id));
-                    if (error && error.code !== 'PGRST116') {
-                        console.warn('Catatan Supabase:', error);
-                    }
-                } catch (err) {
-                    console.warn('Gagal koneksi Supabase, melanjutkan pembersihan lokal:', err);
-                }
+            showToast('Menghapus artikel...', 'fa-spinner fa-spin');
+            try {
+                const response = await fetch(`/api/content?resource=articles&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            } catch (err) {
+                console.error('Gagal menghapus artikel dari Supabase:', err);
+                showToast('Artikel gagal dihapus: ' + err.message, 'fa-triangle-exclamation');
+                return;
             }
 
-            // Simpan ID artikel yang dihapus agar artikel sampel tidak muncul kembali
-            const deletedIds = JSON.parse(localStorage.getItem('portal_deleted_ids') || '[]');
-            if (!deletedIds.some(dId => String(dId) === String(id))) {
-                deletedIds.push(String(id));
-                localStorage.setItem('portal_deleted_ids', JSON.stringify(deletedIds));
-            }
-
-            // Sinkronkan state lokal & bookmarks
-            let stored = JSON.parse(localStorage.getItem('portal_articles') || '[]');
-            stored = stored.filter(a => String(a.id) !== String(id));
-            localStorage.setItem('portal_articles', JSON.stringify(stored));
             articles = articles.filter(a => String(a.id) !== String(id));
             bookmarkedIds = bookmarkedIds.filter(bId => String(bId) !== String(id));
             localStorage.setItem('portal_bookmarks', JSON.stringify(bookmarkedIds));

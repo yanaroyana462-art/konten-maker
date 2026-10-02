@@ -503,6 +503,7 @@
             await loadBooksFromSupabase();
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) document.getElementById('geminiApiKey').value = savedKey;
+            await importLocalArticlesToSupabase();
             const urlParams = new URLSearchParams(window.location.search);
             const editId = urlParams.get('id');
             if (editId) {
@@ -511,6 +512,41 @@
             await loadUserRequests();
             setupTerminalKeyListeners();
         };
+
+        async function importLocalArticlesToSupabase() {
+            const localArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
+            const localRequests = JSON.parse(localStorage.getItem('article_requests') || '[]');
+            const articlesPending = localArticles.length > 0 && !localStorage.getItem('portal_articles_migrated_to_supabase');
+            const requestsPending = localRequests.length > 0 && !localStorage.getItem('article_requests_migrated_to_supabase');
+            if (!articlesPending && !requestsPending) return;
+
+            try {
+                const sessionResponse = await fetch('/api/verify-admin');
+                const session = await sessionResponse.json();
+                if (!session.authenticated) return;
+
+                const imported = [];
+                for (const item of [
+                    { pending: articlesPending, resource: 'legacy-articles', marker: 'portal_articles_migrated_to_supabase', items: localArticles, label: 'artikel' },
+                    { pending: requestsPending, resource: 'legacy-requests', marker: 'article_requests_migrated_to_supabase', items: localRequests, label: 'permintaan' }
+                ]) {
+                    if (!item.pending) continue;
+                    const response = await fetch(`/api/content?resource=${item.resource}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(item.items)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                    localStorage.setItem(item.marker, 'true');
+                    imported.push(`${result.imported} ${item.label}`);
+                }
+                if (imported.length) showToast(`${imported.join(' dan ')} lokal disinkronkan ke Supabase.`, 'fa-cloud-arrow-up');
+            } catch (err) {
+                console.error('Gagal mengimpor data lokal:', err);
+                showToast('Impor data lokal gagal: ' + err.message, 'fa-triangle-exclamation');
+            }
+        }
 
         // --- Dark Mode Toggle ---
         function toggleDarkMode() {
@@ -852,21 +888,14 @@ ATURAN:
         // --- Load & Apply User Article Requests ---
         async function loadUserRequests() {
             let requests = [];
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('article_requests')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-                    if (!error && data && data.length > 0) {
-                        requests = data;
-                    }
-                } catch (err) {
-                    console.warn('Gagal membaca article_requests dari Supabase:', err);
-                }
-            }
-            if (requests.length === 0) {
-                requests = JSON.parse(localStorage.getItem('article_requests') || '[]');
+            try {
+                const response = await fetch('/api/content?resource=requests');
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                requests = result;
+            } catch (err) {
+                console.warn('Gagal membaca permintaan dari Supabase:', err);
+                showToast('Permintaan tidak termuat dari Supabase: ' + err.message, 'fa-triangle-exclamation');
             }
 
             const badge = document.getElementById('userRequestCountBadge');
@@ -1197,19 +1226,15 @@ ATURAN:
             }
 
             let article = null;
-            if (supabaseClient) {
-                showToast('Mengambil data artikel...', 'fa-spinner fa-spin');
-                try {
-                    const { data, error } = await supabaseClient.from('articles').select('*').eq('id', id).single();
-                    if (!error && data) article = data;
-                } catch (err) {
-                    console.warn('Gagal memuat artikel dari Supabase:', err);
-                }
-            }
-
-            if (!article) {
-                const localArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
-                article = localArticles.find(a => String(a.id) === String(id));
+            showToast('Mengambil data artikel...', 'fa-spinner fa-spin');
+            try {
+                const response = await fetch(`/api/content?resource=articles&id=${encodeURIComponent(id)}`);
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                article = result[0] || null;
+            } catch (err) {
+                console.error('Gagal memuat artikel dari Supabase:', err);
+                showToast('Artikel gagal dimuat dari Supabase: ' + err.message, 'fa-triangle-exclamation');
             }
 
             if (article) {
@@ -1576,37 +1601,17 @@ ${contextText}`;
             const btnPublish = document.getElementById('btnPublish');
             const originalBtnHTML = btnPublish ? btnPublish.innerHTML : '';
 
-            if (supabaseClient) {
-                if (btnPublish) {
-                    btnPublish.disabled = true;
-                    btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>${editingArticleId ? 'Memperbarui...' : 'Menyimpan...'}</span>`;
-                }
-                try {
-                    if (editingArticleId) {
-                        const { error } = await supabaseClient.from('articles').update({
-                            title: newArticle.title,
-                            category: newArticle.category,
-                            category_label: newArticle.categoryLabel,
-                            tone: newArticle.tone,
-                            audience: newArticle.audience,
-                            words: newArticle.words,
-                            read_time: newArticle.readTime,
-                            snippet: newArticle.snippet,
-                            content: newArticle.content,
-                            title_en: newArticle.title_en,
-                            snippet_en: newArticle.snippet_en,
-                            content_en: newArticle.content_en,
-                            title_ar: newArticle.title_ar,
-                            snippet_ar: newArticle.snippet_ar,
-                            content_ar: newArticle.content_ar
-                        }).eq('id', editingArticleId);
-                        if (error) throw error;
-                        showToast('Berhasil diperbarui di Supabase!', 'fa-circle-check');
-                        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-                        return;
-                    }
-
-                    const { error } = await supabaseClient.from('articles').insert([{
+            if (btnPublish) {
+                btnPublish.disabled = true;
+                btnPublish.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>${editingArticleId ? 'Memperbarui...' : 'Menyimpan...'}</span>`;
+            }
+            try {
+                const response = await fetch(editingArticleId
+                    ? `/api/content?resource=articles&id=${encodeURIComponent(editingArticleId)}`
+                    : '/api/content?resource=articles', {
+                    method: editingArticleId ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
                         title: newArticle.title,
                         category: newArticle.category,
                         category_label: newArticle.categoryLabel,
@@ -1622,40 +1627,20 @@ ${contextText}`;
                         title_ar: newArticle.title_ar,
                         snippet_ar: newArticle.snippet_ar,
                         content_ar: newArticle.content_ar
-                    }]);
-
-                    if (error) throw error;
-                    showToast('Berhasil dipublikasikan ke Supabase!', 'fa-circle-check');
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-                    return;
-                } catch (err) {
-                    console.error('Gagal simpan ke Supabase:', err);
-                    showToast('Gagal terhubung Supabase, menyimpan lokal...', 'fa-triangle-exclamation');
-                    if (btnPublish) {
-                        btnPublish.disabled = false;
-                        btnPublish.innerHTML = originalBtnHTML;
-                    }
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+                showToast(editingArticleId ? 'Berhasil diperbarui di Supabase!' : 'Berhasil dipublikasikan ke Supabase!', 'fa-circle-check');
+                setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+            } catch (err) {
+                console.error('Gagal menyimpan artikel ke Supabase:', err);
+                showToast('Gagal menyimpan ke Supabase: ' + err.message, 'fa-triangle-exclamation');
+                if (btnPublish) {
+                    btnPublish.disabled = false;
+                    btnPublish.innerHTML = originalBtnHTML;
                 }
             }
-
-            // Fallback ke localStorage jika Supabase belum aktif atau gagal
-            let portalArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
-            if (editingArticleId) {
-                const index = portalArticles.findIndex(a => String(a.id) === String(editingArticleId));
-                if (index > -1) {
-                    portalArticles[index] = { ...portalArticles[index], ...newArticle, id: editingArticleId };
-                } else {
-                    portalArticles.unshift({ ...newArticle, id: editingArticleId });
-                }
-            } else {
-                portalArticles.unshift({ ...newArticle, id: Date.now() });
-            }
-            localStorage.setItem('portal_articles', JSON.stringify(portalArticles));
-
-            showToast(editingArticleId ? 'Berhasil diperbarui di Portal!' : 'Berhasil dipublikasikan ke Portal!', 'fa-circle-check');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1200);
         }
 
         // --- Simple Export ---
