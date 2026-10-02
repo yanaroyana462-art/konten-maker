@@ -1027,20 +1027,62 @@ ATURAN:
             renderUploadedBooks();
         }
 
+        async function saveUploadedBookToSupabase(file, extractedText) {
+            if (!supabaseClient) {
+                return { saved: false, reason: 'Supabase client belum siap.' };
+            }
+
+            const safeName = file.name.replace(/\s+/g, '-');
+            const filePath = `${Date.now()}-${safeName}`;
+
+            try {
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('documents')
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    console.error('Supabase storage upload gagal:', uploadError);
+                    return { saved: false, reason: uploadError.message || 'Storage upload gagal.' };
+                }
+
+                const { error: dbError } = await supabaseClient.from('documents').insert({
+                    file_name: file.name,
+                    storage_path: filePath,
+                    file_size: file.size,
+                    content_text: extractedText ? extractedText.slice(0, 25000) : ''
+                });
+
+                if (dbError) {
+                    console.error('Supabase insert dokumen gagal:', dbError);
+                    return { saved: false, reason: dbError.message || 'Insert tabel documents gagal.' };
+                }
+
+                return { saved: true, reason: 'OK' };
+            } catch (err) {
+                console.error('Penyimpanan Supabase error:', err);
+                return { saved: false, reason: err?.message || 'Koneksi Supabase gagal.' };
+            }
+        }
+
         // --- Book Upload & Management ---
         async function handleBookUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
             showToast('Mengekstrak teks dokumen...', 'fa-spinner fa-spin');
+            let savedCount = 0;
+            let localFallbackCount = 0;
+            let firstError = '';
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const formattedSize = file.size > 1024 * 1024 
                     ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
                     : Math.round(file.size / 1024) + ' KB';
-                
-                // 1. Ekstrak teks seperti biasa
+
                 let extractedText = '';
                 try {
                     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
@@ -1052,36 +1094,12 @@ ATURAN:
                     console.error('Gagal mengekstrak teks:', file.name, err);
                 }
 
-                let savedToSupabase = false;
-
-                // Coba simpan ke Supabase jika client aktif
-                if (supabaseClient) {
-                    try {
-                        const filePath = `public/${Date.now()}-${file.name}`;
-                        const { error: uploadError } = await supabaseClient.storage
-                            .from('documents')
-                            .upload(filePath, file);
-
-                        if (!uploadError) {
-                            const { error: dbError } = await supabaseClient.from('documents').insert({
-                                file_name: file.name,
-                                storage_path: filePath,
-                                file_size: file.size,
-                                content_text: extractedText ? extractedText.slice(0, 25000) : ''
-                            });
-                            if (!dbError) {
-                                savedToSupabase = true;
-                            }
-                        } else {
-                            console.warn('Storage upload error:', uploadError);
-                        }
-                    } catch (netErr) {
-                        console.warn('Koneksi Supabase gagal, beralih ke penyimpanan lokal:', netErr);
-                    }
-                }
-
-                // Fallback ke penyimpanan lokal jika Supabase gagal/offline
-                if (!savedToSupabase) {
+                const saveResult = await saveUploadedBookToSupabase(file, extractedText);
+                if (saveResult.saved) {
+                    savedCount += 1;
+                } else {
+                    if (!firstError) firstError = saveResult.reason;
+                    localFallbackCount += 1;
                     uploadedBooks.unshift({
                         id: Date.now() + i,
                         name: file.name,
@@ -1094,10 +1112,16 @@ ATURAN:
                 }
             }
 
-            // Muat ulang daftar buku dari database untuk memastikan sinkron
             await loadBooksFromSupabase();
-            showToast(`${files.length} file berhasil diunggah ke Supabase!`);
             event.target.value = '';
+
+            if (savedCount > 0 && localFallbackCount === 0) {
+                showToast(`${savedCount} file berhasil disimpan ke Supabase!`, 'fa-circle-check');
+            } else if (savedCount > 0 && localFallbackCount > 0) {
+                showToast(`${savedCount} file ke Supabase, ${localFallbackCount} fallback lokal. ${firstError}`, 'fa-triangle-exclamation');
+            } else {
+                showToast(`Upload gagal tersimpan ke Supabase. ${firstError}`, 'fa-triangle-exclamation');
+            }
         }
 
         function toggleSelectBook(id) {
