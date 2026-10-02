@@ -46,12 +46,40 @@
             color: #9ca3af;
             cursor: text;
         }
+        #editor { overflow-wrap: anywhere; }
+        #editor img, #editor video, #editor iframe { max-width: 100%; }
+        #terminalOutput { overflow-wrap: anywhere; }
+        #toast { max-width: calc(100vw - 2rem); }
+        @media (max-width: 639px) {
+            body { overflow-x: hidden; }
+            body > header {
+                height: auto;
+                min-height: 4rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0.5rem 0.75rem;
+            }
+            body > header > div:first-child { flex: 1 1 auto; min-width: 0; }
+            body > header > div:last-child {
+                width: 100%;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+            #btnPublish span, #exportDropdownBtn > span { display: none; }
+            #editorToolbar { flex-direction: column; align-items: stretch; }
+            #editorToolbar > div:first-child { max-width: 100%; overflow-x: auto; }
+            #editorToolbar > div:last-child { width: 100%; justify-content: space-between; }
+            #tabLang-id, #tabLang-en, #tabLang-ar { min-width: 0; justify-content: center; }
+            #terminalInput { min-width: 0; }
+            #toast { left: 1rem; right: 1rem; bottom: 1rem; }
+        }
     </style>
 </head>
 <body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
 
     <!-- Top Navigation Bar -->
-    <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 flex items-center justify-between z-20 shrink-0">
+    <header class="min-h-16 h-auto border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 flex flex-wrap items-center justify-between gap-y-2 z-20 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
                 <i class="fa-solid font-bold fa-pen-nib text-lg"></i>
@@ -63,7 +91,7 @@
         </div>
 
         <!-- Quick Top Actions -->
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center justify-end flex-wrap gap-2 sm:gap-3">
             <button id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Ubah Tema">
                 <i class="fa-solid fa-moon dark:hidden"></i>
                 <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
@@ -361,7 +389,7 @@
                 </div>
 
                 <!-- Rich Text Formatting Toolbar -->
-                <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-slate-600 dark:text-slate-300">
+                <div id="editorToolbar" class="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-slate-600 dark:text-slate-300">
                     <div class="flex items-center gap-0.5 sm:gap-1 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
                         <button onclick="execCmd('bold')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Tebal (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
                         <button onclick="execCmd('italic')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded w-7 h-7 flex items-center justify-center" title="Miring (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>

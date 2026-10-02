@@ -117,6 +117,9 @@
             margin: 0.8rem 0 1rem 1.25rem;
             padding-left: 1rem;
         }
+        #modalBody { min-width: 0; overflow-wrap: anywhere; }
+        #modalBody img, #modalBody video, #modalBody iframe { max-width: 100%; }
+        #modalBody pre, #modalBody table { display: block; max-width: 100%; overflow-x: auto; }
         /* Print-Friendly Stylesheet */
         @media print {
             body { background: #ffffff !important; color: #000000 !important; }
@@ -129,6 +132,29 @@
             #modalBody {
                 color: #111111 !important;
             }
+        }
+        @media (max-width: 639px) {
+            body { overflow-x: hidden; }
+            body > header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0.65rem 0.75rem;
+            }
+            body > header > div:first-child { flex: 1 1 100%; min-width: 0; }
+            body > header > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.3rem;
+            }
+            #adminNavContainer { border-left: 0; padding-left: 0; }
+            #userProfileBadge { max-width: 45%; }
+            #articleDetailView { padding: 1rem; }
+            #articleDetailView > .no-print:first-child { align-items: stretch; }
+            #articleDetailView > .no-print:first-child > div { width: 100%; justify-content: flex-start; }
+            #articleDetailView > .no-print:first-child > div > button { min-height: 2.5rem; }
+            #toast { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; max-width: none; }
+            #btnBackToTop { right: 0.75rem; bottom: 4.5rem; }
         }
     </style>
 </head>
@@ -324,11 +350,11 @@
 
         <div id="articlesListView" class="space-y-6">
         <!-- Controls & Filter Toolbar -->
-        <div class="flex items-center justify-end gap-2 pb-2 border-b border-slate-200 dark:border-slate-800 text-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pb-2 border-b border-slate-200 dark:border-slate-800 text-xs">
             <!-- Secondary Filters & Sorting -->
-            <div class="flex items-center gap-2 text-xs">
+            <div class="grid grid-cols-2 sm:flex gap-2 text-xs w-full sm:w-auto min-w-0">
                 <!-- Tone Filter -->
-                <select id="filterTone" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
+                <select id="filterTone" onchange="applyFilters()" class="w-full min-w-0 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
                     <option value="all" id="opt-tone-all">Semua Tone</option>
                     <option value="santai" id="opt-tone-santai">Santai</option>
                     <option value="formal" id="opt-tone-formal">Formal</option>
@@ -337,7 +363,7 @@
                 </select>
 
                 <!-- Sorting Option -->
-                <select id="sortBy" onchange="applyFilters()" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
+                <select id="sortBy" onchange="applyFilters()" class="w-full min-w-0 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
                     <option value="newest" id="opt-sort-newest">Terbaru</option>
                     <option value="oldest" id="opt-sort-oldest">Terlama</option>
                     <option value="readtime" id="opt-sort-readtime">Waktu Baca Paling Singkat</option>
@@ -371,14 +397,14 @@
         </div>
 
         <!-- In-Page Article Detail View (Bukan Pop-up) -->
-        <article id="articleDetailView" class="hidden space-y-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm transition-all">
+        <article id="articleDetailView" class="hidden min-w-0 space-y-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-10 shadow-sm transition-all">
             <!-- Top Navigation & Action Controls -->
             <div class="no-print flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-slate-200 dark:border-slate-800">
                 <button onclick="closeModal()" class="flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
                     <i class="fa-solid fa-arrow-left"></i>
                     <span id="t-btnBack">Kembali ke Daftar</span>
                 </button>
-                <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex w-full sm:w-auto items-center gap-2 flex-wrap">
                     <button id="btnTTS" onclick="toggleTTS()" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Dengarkan pembacaan artikel">
                         <i id="ttsIcon" class="fa-solid fa-volume-high text-sky-500"></i> <span id="t-btnListen">Dengarkan</span>
                     </button>
