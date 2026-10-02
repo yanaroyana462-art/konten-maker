@@ -6,6 +6,7 @@ const ARTICLE_FIELDS = [
     'title', 'category', 'category_label', 'tone', 'audience', 'words', 'read_time', 'snippet', 'content',
     'title_en', 'snippet_en', 'content_en', 'title_ar', 'snippet_ar', 'content_ar'
 ];
+const MULTILINGUAL_FIELDS = ['title_en', 'snippet_en', 'content_en', 'title_ar', 'snippet_ar', 'content_ar'];
 
 function sendError(res, status, message) {
     return res.status(status).json({ error: message });
@@ -34,6 +35,26 @@ function parseBody(req) {
 
 function articlePayload(body) {
     return Object.fromEntries(ARTICLE_FIELDS.filter(field => body[field] !== undefined).map(field => [field, body[field]]));
+}
+
+function stripMultilingual(data) {
+    if (Array.isArray(data)) return data.map(item => stripMultilingual(item));
+    const copy = { ...data };
+    for (const f of MULTILINGUAL_FIELDS) delete copy[f];
+    return copy;
+}
+
+async function saveWithSchemaFallback(path, options, payload) {
+    try {
+        return await supabaseRequest(path, { ...options, body: JSON.stringify(payload) });
+    } catch (err) {
+        // Jika Supabase belum memiliki kolom multibahasa baru di schema cache
+        if (err.message && err.message.includes('in the schema cache')) {
+            const stripped = stripMultilingual(payload);
+            return await supabaseRequest(path, { ...options, body: JSON.stringify(stripped) });
+        }
+        throw err;
+    }
 }
 
 export default async function handler(req, res) {

@@ -18,6 +18,14 @@ create table if not exists public.articles (
     created_at timestamptz not null default now()
 );
 
+-- Pastikan kolom multi-bahasa ada jika tabel sudah pernah dibuat sebelumnya
+alter table public.articles add column if not exists title_en text;
+alter table public.articles add column if not exists snippet_en text;
+alter table public.articles add column if not exists content_en text;
+alter table public.articles add column if not exists title_ar text;
+alter table public.articles add column if not exists snippet_ar text;
+alter table public.articles add column if not exists content_ar text;
+
 alter table public.articles enable row level security;
 grant select on public.articles to anon, authenticated;
 drop policy if exists "Public can read articles" on public.articles;
@@ -35,3 +43,6 @@ create table if not exists public.article_requests (
 );
 
 alter table public.article_requests enable row level security;
+
+-- Muat ulang schema cache PostgREST Supabase
+notify pgrst, 'reload schema';
