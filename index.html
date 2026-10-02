@@ -621,153 +621,6 @@
     </button>
 
     <script>
-        // --- Sample Article Data Database ---
-        const sampleArticles = [
-            {
-                id: 1,
-                title: "Menjaga Konsistensi Amal dan Kebaikan di Era Digital",
-                category: "khutbah",
-                categoryLabel: "🕌 Khutbah",
-                tone: "formal",
-                audience: "Masyarakat Umum",
-                words: 620,
-                readTime: 3,
-                date: "30 Sep 2026",
-                title_en: "Maintaining Consistency in Good Deeds in the Digital Age",
-                snippet_en: "In this fast-paced era, maintaining consistency in small acts of kindness is far more beloved than large occasional deeds.",
-                content_en: `
-                    <p><strong>Introduction:</strong> In this fast-paced life, we often find ourselves caught up in daily distractions, forgetting the essence of consistency in doing good.</p>
-                    <p>Even the smallest acts of kindness done consistently are far more beloved than occasional grand gestures without sustainability.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">1. Aligning Intentions Amid Information Overload</h3>
-                    <p>In our current digital world, our focus easily scatters through constant opinions. Therefore, it is essential to constantly realign intentions and filter what we consume and share.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">2. Practical Steps to Consistency</h3>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li>Set realistic daily goals for personal growth and worship.</li>
-                        <li>Surround yourself with supportive peers and mentors.</li>
-                        <li>Utilize digital tools as mediums for spreading wisdom and positive impact.</li>
-                    </ul>
-                    <p class="mt-4">May we be granted steadfastness in walking this path of continuous goodness.</p>
-                `,
-                title_ar: "المحافظة على المداومة على العمل الصالح في العصر الرقمي",
-                snippet_ar: "في هذا العصر المتسارع، تعتبر المداومة على الخير ولو قل أحب الأعمال وأعظمها بركة.",
-                content_ar: `
-                    <p><strong>مقدمة:</strong> إخوتي الكرام، في خضم هذه الحياة المتسارعة، كثيراً ما تلهينا مشاغل الدنيا عن جوهر الاستمرار والمداومة على فعل الخير.</p>
-                    <p>إن أدوم الأعمال وإن قل أحب إلى الله من عمل كبير ينقطع صاحبه عنه بعد حين.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">١. تصحيح النوايا في عصر تدفق المعلومات</h3>
-                    <p>في عصرنا الرقمي الحالي، تتشتت الأذهان بسهولة مع كثرة الآراء والملهيات، لذا ينبغي دوماً تجديد النية وحسن انتقاء ما نقرأه وننشره.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">٢. خطوات عملية للمداومة</h3>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li>تحديد ورد يومي ومهام واقعية يمكن الاستمرار عليها.</li>
-                        <li>بناء بيئة صالحة ومجتمع إيجابي يعين على الطاعة والإنتاجية.</li>
-                        <li>استثمار المنصات الرقمية كوسيلة لنشر العلم النافع والأثر الطيب.</li>
-                    </ul>
-                    <p class="mt-4">نسأل الله تعالى أن يمن علينا بالثبات والاستقامة على طريق الخير والبركة.</p>
-                `,
-                snippet: "Dalam era serba cepat ini, menjaga konsistensi berbuat kebaikan sekecil apa pun jauh lebih dicintai daripada amalan besar yang hanya dilakukan sesekali.",
-                content: `
-                    <p><strong>Awwalush-Kalam:</strong> Saudaraku yang dirahmati Allah, dalam kehidupan yang serba cepat ini, seringkali kita terjebak dalam kesibukan duniawi hingga melupakan esensi konsistensi dalam berbuat kebaikan.</p>
-                    <p>Kebaikan sekecil apa pun yang dilakukan secara kontinyu jauh lebih dicintai dibanding amalan besar yang hanya dilakukan sesekali tanpa kesinambungan.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">1. Menata Niat di Tengah Hiruk-Pikuk Informasi</h3>
-                    <p>Di era digital sekarang, fokus kita mudah terpecah oleh godaan opini dan informasi masif. Oleh karena itu, penting untuk selalu meluruskan niat dan menyaring apa yang kita konsumsi maupun bagikan.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">2. Langkah Nyata Konsistensi</h3>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li>Menentukan target harian ibadah dan amal secara realistis.</li>
-                        <li>Membangun ekosistem pertemanan dan komunitas yang saling mengingatkan.</li>
-                        <li>Memanfaatkan platform digital sebagai media penyebar ilmu dan inspirasi positif.</li>
-                    </ul>
-                    <p class="mt-4">Semoga kita senantiasa diberikan keteguhan hati untuk terus melangkah di jalan kebaikan ini secara istiqamah.</p>
-                `
-            },
-            {
-                id: 2,
-                title: "Strategi Manajemen Waktu dan Focus Mode untuk Generasi Z",
-                category: "artikel",
-                categoryLabel: "📰 Artikel",
-                tone: "santai",
-                audience: "Remaja & Gen Z",
-                words: 480,
-                readTime: 2,
-                date: "28 Sep 2026",
-                title_en: "Time Management and Deep Work Strategies for Gen Z",
-                snippet_en: "Phone distractions killing your productivity? Discover Time-Blocking and simple Deep Work habits to stay in flow.",
-                content_en: `
-                    <p>Ever sat down intending to study or work, only to realize you spent 2 hours endlessly scrolling? You are not alone! Digital notifications are purposefully designed to hijack attention.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">Focus Secrets:</h3>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li><strong>Pomodoro Technique:</strong> Work with 25 minutes of laser focus, followed by a rewarding 5-minute break.</li>
-                        <li><strong>Silence Non-Essential Notifications:</strong> Turn on Focus Mode during primary working blocks.</li>
-                    </ul>
-                `,
-                title_ar: "استراتيجيات إدارة الوقت والتركيز العميق لجيل الشباب",
-                snippet_ar: "هل تشتتك الهواتف الذكية وتؤثر على إنتاجيتك؟ إليك طريقة تنظيم الوقت والعمل العميق.",
-                content_ar: `
-                    <p>كم مرة جلست بنية الدراسة أو العمل، ثم وجدت نفسك قد قضيت ساعات في تصفح وسائل التواصل؟ لست وحدك، فالمشتتات الرقمية مصممة لاقتناص انتباهنا.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">أسرار التركيز الفعال:</h3>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li><strong>تقنية بومودورو:</strong> العمل بتركيز تام لمدة ٢٥ دقيقة يليها ٥ دقائق استراحة.</li>
-                        <li><strong>إيقاف الإشعارات غير الضرورية:</strong> تفعيل نمط التركيز أثناء أوقات المهام الرئيسية.</li>
-                    </ul>
-                `,
-                snippet: "Banyak distraksi di HP membuat produktivitas kamu terganggu? Pelajari teknik Time Blocking dan metode Deep Work sederhana ini.",
-                content: `
-                    <p>Pernah ngerasa baru duduk mau belajar atau kerja, tapi tau-tau udah 2 jam scroll medsos? Kamu gak sendirian kok! Distraksi digital emang sengaja didesain buat narik perhatian kita.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">Rahasia Tetap Fokus:</h3>
-                    <p>Coba terapkan dua langkah ringkas ini:</p>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li><strong>Teknik Pomodoro:</strong> Pasang timer 25 menit fokus penuh, lalu beri apresiasi istirahat 5 menit.</li>
-                        <li><strong>Matikan Notifikasi Non-Penting:</strong> Gunakan fitur Focus Mode saat jam belajar utama.</li>
-                    </ul>
-                    <p class="mt-4">Konsistensi kecil setiap hari bakal ngasih dampak raksasa buat masa depan kamu!</p>
-                `
-            },
-            {
-                id: 3,
-                title: "Script Video: 3 Kebiasaan Pagi Pemimpin Berprestasi",
-                category: "script",
-                categoryLabel: "🎙️ Script Video",
-                tone: "inspiratif",
-                audience: "Mahasiswa & Profesional",
-                words: 350,
-                readTime: 2,
-                date: "25 Sep 2026",
-                snippet: "Naskah video durasi 2 menit untuk konten edukasi karir dan pengembangan diri harian.",
-                content: `
-                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800">[00:00 - HOOK VISUAL]</p>
-                    <p>"Tahu gak apa persamaan orang-orang sukses sebelum jam 8 pagi?"</p>
-                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 mt-3">[00:30 - POINT BREAKDOWN]</p>
-                    <ol class="list-decimal pl-5 space-y-2 my-2">
-                        <li><strong>Tanpa HP di 15 Menit Pertama:</strong> Beri napas bagi otak sebelum dibombardir notifikasi.</li>
-                        <li><strong>Hidrasi & Stretches:</strong> Minum air putih hangat untuk memicu energi metabolisme.</li>
-                        <li><strong>Tulis 3 Top Priorities:</strong> Tentukan 3 tugas terbesar yang wajib diselesaikan hari ini.</li>
-                    </ol>
-                    <p class="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 mt-3">[01:45 - OUTRO & CTA]</p>
-                    <p>"Mana dari 3 kebiasaan ini yang udah kamu terapkan? Komen di bawah ya!"</p>
-                `
-            },
-            {
-                id: 4,
-                title: "Panduan Menyusun Content Calendar Media Sosial yang Rapi",
-                category: "sosmed",
-                categoryLabel: "📲 Media Sosial",
-                tone: "profesional",
-                audience: "Pekerja & Marketer",
-                words: 710,
-                readTime: 4,
-                date: "22 Sep 2026",
-                snippet: "Langkah terstruktur membangun perencanaan konten mingguan agar jadwal tayang konsisten tanpa rasa panik kehabisan ide.",
-                content: `
-                    <p>Membuat konten secara berkala membutuhkan sistem yang jelas. Tanpa perencanaan, kualitas materi postingan cenderung tidak konsisten.</p>
-                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-4">Pilar Konten Utama:</h3>
-                    <p>Bagi alokasi postingan ke dalam 3 jenis ide:</p>
-                    <ul class="list-disc pl-5 space-y-1 my-2">
-                        <li><strong>60% Edukasi & Nilai Tambah:</strong> Artikel tips, tutorial singkat, dan panduan.</li>
-                        <li><strong>30% Engagement:</strong> Polling, tanya-jawab, dan cerita personal/behind the scene.</li>
-                        <li><strong>10% Promosi Langsung:</strong> Panggilan aksi untuk penawaran produk atau layanan.</li>
-                    </ul>
-                `
-            }
-        ];
-
         // --- Translations Dictionary (id, en, ar) ---
         const translations = {
             id: {
@@ -979,7 +832,7 @@
             : null;
 
         // --- Application State ---
-        let articles = [...sampleArticles];
+        let articles = [];
         let currentCategory = 'all';
         const PAGE_SIZE = 6;
         let visibleCount = PAGE_SIZE;
@@ -1069,9 +922,7 @@
 
             const deletedIds = JSON.parse(localStorage.getItem('portal_deleted_ids') || '[]');
             const storedArticles = JSON.parse(localStorage.getItem('portal_articles') || '[]');
-            const activeSamples = sampleArticles.filter(s => !deletedIds.some(dId => String(dId) === String(s.id)));
-            const combinedLocal = storedArticles.length > 0 ? [...storedArticles, ...activeSamples] : activeSamples;
-            articles = (remoteArticles.length > 0 ? remoteArticles : combinedLocal)
+            articles = (remoteArticles.length > 0 ? remoteArticles : storedArticles)
                 .filter(a => !deletedIds.some(dId => String(dId) === String(a.id)));
         }
 
