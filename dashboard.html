@@ -1013,12 +1013,15 @@ ATURAN:
                 <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm text-xs">
                     <div class="flex items-start justify-between gap-2">
                         <span class="font-bold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">${req.title}</span>
-                        <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] uppercase font-semibold bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800">${req.tone || 'santai'}</span>
+                        <div class="flex items-center gap-1 shrink-0">
+                            ${req.category ? `<span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${req.category}</span>` : ''}
+                            <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-semibold bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800">${req.tone || 'santai'}</span>
+                        </div>
                     </div>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">${req.theme}</p>
                     <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80">
                         <span class="text-[10px] text-slate-400">${req.user_name || 'Pembaca'}</span>
-                        <button type="button" onclick="applyUserRequest(${JSON.stringify(req.title).replace(/"/g, '&quot;')}, ${JSON.stringify(req.theme).replace(/"/g, '&quot;')}, ${JSON.stringify(req.tone || 'santai').replace(/"/g, '&quot;')})" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium text-[11px] flex items-center gap-1 transition">
+                        <button type="button" onclick="applyUserRequest(${JSON.stringify(req.title).replace(/"/g, '&quot;')}, ${JSON.stringify(req.theme).replace(/"/g, '&quot;')}, ${JSON.stringify(req.tone || 'santai').replace(/"/g, '&quot;')}, ${JSON.stringify(req.category || 'politik').replace(/"/g, '&quot;')})" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium text-[11px] flex items-center gap-1 transition">
                             <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> Gunakan
                         </button>
                     </div>
@@ -1026,7 +1029,7 @@ ATURAN:
             `).join('');
         }
 
-        function applyUserRequest(title, theme, tone) {
+        function applyUserRequest(title, theme, tone, category) {
             const titleInput = document.getElementById('paramTitle');
             if (titleInput) {
                 titleInput.value = title;
@@ -1035,6 +1038,10 @@ ATURAN:
             const refInput = document.getElementById('paramReference');
             if (refInput) {
                 refInput.value = theme;
+            }
+            if (category) {
+                const catSelect = document.getElementById('paramCategory');
+                if (catSelect) catSelect.value = category;
             }
             const toneRadio = document.querySelector(`input[name="paramTone"][value="${tone}"]`);
             if (toneRadio) {

@@ -74,16 +74,31 @@ export default async function handler(req, res) {
             if (!body.title?.trim() || !body.theme?.trim()) return sendError(res, 400, 'Judul dan tema wajib diisi.');
             const request = {
                 title: body.title.trim(),
+                category: body.category || 'politik',
                 theme: body.theme.trim(),
                 tone: body.tone || 'santai',
                 user_name: body.user_name || 'Pengunjung Portal',
                 user_phone: body.user_phone || ''
             };
-            await supabaseRequest('article_requests', {
-                method: 'POST',
-                headers: { Prefer: 'return=minimal' },
-                body: JSON.stringify(request)
-            });
+            try {
+                await supabaseRequest('article_requests', {
+                    method: 'POST',
+                    headers: { Prefer: 'return=minimal' },
+                    body: JSON.stringify(request)
+                });
+            } catch (err) {
+                if (err.message && err.message.includes('category') && err.message.includes('schema cache')) {
+                    const fallbackRequest = { ...request };
+                    delete fallbackRequest.category;
+                    await supabaseRequest('article_requests', {
+                        method: 'POST',
+                        headers: { Prefer: 'return=minimal' },
+                        body: JSON.stringify(fallbackRequest)
+                    });
+                } else {
+                    throw err;
+                }
+            }
             return res.status(201).json({ success: true });
         }
 
