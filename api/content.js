@@ -87,14 +87,30 @@ export default async function handler(req, res) {
                     body: JSON.stringify(request)
                 });
             } catch (err) {
-                if (err.message && err.message.includes('category') && err.message.includes('schema cache')) {
+                if (err.message && err.message.includes('schema cache')) {
                     const fallbackRequest = { ...request };
-                    delete fallbackRequest.category;
-                    await supabaseRequest('article_requests', {
-                        method: 'POST',
-                        headers: { Prefer: 'return=minimal' },
-                        body: JSON.stringify(fallbackRequest)
-                    });
+                    if (err.message.includes('category')) {
+                        delete fallbackRequest.category;
+                    }
+                    if (err.message.includes('theme')) {
+                        delete fallbackRequest.theme;
+                        fallbackRequest.content = body.theme.trim();
+                    }
+                    try {
+                        await supabaseRequest('article_requests', {
+                            method: 'POST',
+                            headers: { Prefer: 'return=minimal' },
+                            body: JSON.stringify(fallbackRequest)
+                        });
+                    } catch (fallbackErr) {
+                        // Jika kolom 'content' juga tidak ada di schema tabel lama
+                        delete fallbackRequest.content;
+                        await supabaseRequest('article_requests', {
+                            method: 'POST',
+                            headers: { Prefer: 'return=minimal' },
+                            body: JSON.stringify(fallbackRequest)
+                        });
+                    }
                 } else {
                     throw err;
                 }
