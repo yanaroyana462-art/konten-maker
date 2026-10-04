@@ -25,6 +25,8 @@
     </script>
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Google Fonts Inter, Amiri (Arabic), & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- PDF.js CDN -->
@@ -50,6 +52,55 @@
         #editor img, #editor video, #editor iframe { max-width: 100%; }
         #terminalOutput { overflow-wrap: anywhere; }
         #toast { max-width: calc(100vw - 2rem); }
+        /* Dynamic article layout styles in Editor */
+        #editor .lead {
+            font-size: 1.06em;
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.8;
+        }
+        .dark #editor .lead { color: #e2e8f0; }
+        #editor .key-point {
+            background: rgba(14, 165, 233, 0.08);
+            border-left: 3px solid #0ea5e9;
+            padding: 0.45rem 0.7rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            font-weight: 600;
+        }
+        #editor .summary-box,
+        #editor .cta-box,
+        #editor .note {
+            margin: 1rem 0;
+            padding: 1rem 1.1rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: rgba(248, 250, 252, 0.9);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+        }
+        .dark #editor .summary-box,
+        .dark #editor .cta-box,
+        .dark #editor .note {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: rgba(148, 163, 184, 0.18);
+        }
+        #editor .summary-box {
+            border-left: 4px solid #22c55e;
+            background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(14,165,233,0.04));
+        }
+        #editor .cta-box {
+            border-left: 4px solid #f59e0b;
+            background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(14,165,233,0.04));
+        }
+        #editor .note { border-left: 4px solid #8b5cf6; font-style: italic; }
+        #editor .arabic-text {
+            font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+            font-size: 1.18em;
+            line-height: 1.9;
+            direction: rtl;
+            text-align: right;
+            unicode-bidi: plaintext;
+        }
         @media (max-width: 639px) {
             body { overflow-x: hidden; }
             body > header {
@@ -377,6 +428,16 @@
                         <button type="button" id="btnCopyFromId" onclick="copyFromIndonesianDraft()" class="hidden text-xs px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-medium transition items-center gap-1.5" title="Salin draft & struktur dari Bahasa Indonesia sebagai template">
                             <i class="fa-regular fa-clone text-[11px]"></i> <span>Salin Struktur ID</span>
                         </button>
+                        <select id="selectComponent" onchange="insertComponent(this.value); this.value='';" class="text-xs px-2 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-sky-500 font-medium cursor-pointer">
+                            <option value="">+ Sisip Blok HTML Dinamis...</option>
+                            <option value="lead">Paragraf Pembuka (Lead)</option>
+                            <option value="summary">Kotak Kesimpulan (Summary Box)</option>
+                            <option value="note">Kotak Catatan (Note / Callout)</option>
+                            <option value="keypoint">Highlight Poin Kunci</option>
+                            <option value="arabic">Kutipan Arab (RTL)</option>
+                            <option value="cta">Kotak Call to Action (CTA)</option>
+                            <option value="card_grid">Grid 2 Kolom</option>
+                        </select>
                         <button onclick="quickInsertCTA()" class="text-xs px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/40 border border-sky-200 dark:border-sky-800 font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-plus text-[10px]"></i> Sisip CTA
                         </button>
@@ -404,6 +465,8 @@
                         <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
                         <button onclick="clearEditor()" class="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-500 rounded w-7 h-7 flex items-center justify-center" title="Kosongkan Editor"><i class="fa-regular fa-trash-can"></i></button>
                         <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
+                        <button id="btnHtmlSource" onclick="toggleHtmlSourceMode()" class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded h-7 flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200 font-mono transition" title="Beralih ke Editor Kode HTML Mentah"><i class="fa-solid fa-code text-[11px] text-sky-500"></i><span>HTML</span></button>
+                        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 my-auto mx-0.5"></div>
                         <button onclick="toggleTerminal()" class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded h-7 flex items-center gap-1.5 text-xs text-sky-600 dark:text-sky-400 font-medium" title="Buka/Tutup Terminal Perintah Edit (Ctrl+`)"><i class="fa-solid fa-terminal text-[11px]"></i><span class="hidden sm:inline">Terminal</span></button>
                     </div>
 
@@ -419,6 +482,7 @@
             <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
                 <div class="w-full max-w-3xl min-h-full">
                     <div id="editor" contenteditable="true" data-placeholder="Tulis konten Anda di sini atau sesuaikan parameter di sidebar lalu klik 'Generate Draft'..." oninput="handleEditorInput()" class="editor-content outline-none text-slate-800 dark:text-slate-100 leading-relaxed text-base sm:text-lg min-h-[500px] p-2 space-y-4"></div>
+                    <textarea id="rawHtmlEditor" oninput="handleRawHtmlInput()" placeholder="Tulis atau tempel kode HTML artikel lengkap di sini..." class="hidden w-full min-h-[500px] p-4 font-mono text-xs sm:text-sm bg-slate-900 text-sky-300 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 resize-y leading-relaxed"></textarea>
                 </div>
             </div>
 
@@ -501,6 +565,7 @@
         let terminalHistory = [];
         let terminalHistoryIndex = -1;
         let editorUndoSnapshot = null;
+        let isHtmlSourceMode = false;
         
         // Multilingual manual state
         let currentLangTab = 'id';
@@ -796,6 +861,8 @@ ATURAN:
         function saveActiveLanguageState() {
             const titleVal = document.getElementById('docTitle').value.trim();
             const contentVal = editor.innerHTML.trim();
+            const rawEditor = document.getElementById('rawHtmlEditor');
+            const contentVal = (isHtmlSourceMode && rawEditor) ? rawEditor.value.trim() : editor.innerHTML.trim();
             multilingualData[currentLangTab] = {
                 title: titleVal === 'Draft Konten Tanpa Judul' ? '' : titleVal,
                 content: contentVal
@@ -803,6 +870,12 @@ ATURAN:
             updateLanguageBadges();
         }
 
+        function handleRawHtmlInput() {
+            const rawEditor = document.getElementById('rawHtmlEditor');
+            if (rawEditor) editor.innerHTML = rawEditor.value;
+            updateStats();
+            saveActiveLanguageState();
+        }
         function handleDocTitleInput(val) {
             if (currentLangTab === 'id') {
                 syncTitleToSidebar(val);
@@ -858,6 +931,10 @@ ATURAN:
             const loadedTitle = multilingualData[lang]?.title || '';
             docTitle.value = loadedTitle || (lang === 'id' ? 'Draft Konten Tanpa Judul' : '');
             editor.innerHTML = multilingualData[lang]?.content || '';
+            const rawEditor = document.getElementById('rawHtmlEditor');
+            if (rawEditor) {
+                rawEditor.value = multilingualData[lang]?.content || '';
+            }
 
             if (lang === 'ar') {
                 editor.setAttribute('dir', 'rtl');
@@ -975,6 +1052,55 @@ ATURAN:
             document.getElementById('lengthLabel').innerText = `${val} kata`;
         }
 
+        function toggleHtmlSourceMode() {
+            const rawEditor = document.getElementById('rawHtmlEditor');
+            const btn = document.getElementById('btnHtmlSource');
+            if (!rawEditor || !btn) return;
+            isHtmlSourceMode = !isHtmlSourceMode;
+
+            if (isHtmlSourceMode) {
+                rawEditor.value = editor.innerHTML;
+                editor.classList.add('hidden');
+                rawEditor.classList.remove('hidden');
+                btn.classList.add('bg-sky-100', 'text-sky-600', 'dark:bg-sky-950', 'dark:text-sky-400', 'font-bold');
+                rawEditor.focus();
+                showToast('Beralih ke editor HTML source', 'fa-code');
+            } else {
+                editor.innerHTML = rawEditor.value;
+                rawEditor.classList.add('hidden');
+                editor.classList.remove('hidden');
+                btn.classList.remove('bg-sky-100', 'text-sky-600', 'dark:bg-sky-950', 'dark:text-sky-400', 'font-bold');
+                updateStats();
+                saveActiveLanguageState();
+                editor.focus();
+                showToast('Beralih ke editor visual', 'fa-eye');
+            }
+        }
+
+        function insertComponent(type) {
+            if (!type) return;
+            const templates = {
+                lead: `<p class="lead">Tulis kalimat pembuka atau pengantar utama yang memikat perhatian pembaca di sini.</p>`,
+                summary: `<div class="summary-box"><strong>📌 Ringkasan Penting:</strong> Tulis poin kesimpulan atau takeaway artikel di sini.</div>`,
+                note: `<div class="note"><strong>💡 Catatan:</strong> Tambahkan wawasan, tips, atau catatan penting di sini.</div>`,
+                keypoint: `<span class="key-point">💡 Ide Kunci: Fokus pada hal prioritas</span> `,
+                arabic: `<div class="arabic-text" dir="rtl"><p>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</p></div><p class="text-sm italic text-slate-500">"Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang."</p>`,
+                cta: `<div class="cta-box"><strong>🚀 Aksi Anda:</strong> Bagikan pandangan Anda di kolom komentar atau sebarkan artikel ini jika bermanfaat!</div>`,
+                card_grid: `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-3"><div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50"><strong>Poin A:</strong> Penjelasan singkat poin pertama.</div><div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50"><strong>Poin B:</strong> Penjelasan singkat poin kedua.</div></div>`
+            };
+            const html = templates[type];
+            if (!html) return;
+            if (isHtmlSourceMode) {
+                const rawEditor = document.getElementById('rawHtmlEditor');
+                const pos = rawEditor.selectionStart || rawEditor.value.length;
+                rawEditor.value = rawEditor.value.substring(0, pos) + '\n' + html + '\n' + rawEditor.value.substring(pos);
+                handleRawHtmlInput();
+            } else {
+                document.execCommand('insertHTML', false, html);
+                handleEditorInput();
+            }
+            showToast('Komponen dinamis disisipkan!', 'fa-puzzle-piece');
+        }
         // --- Statistics Counter ---
         function updateStats() {
             const text = editor.innerText.trim();
@@ -1295,8 +1421,12 @@ ATURAN:
         // --- Clear Editor ---
         function clearEditor() {
             if (editor.innerText.trim().length > 0) {
+            const rawEditor = document.getElementById('rawHtmlEditor');
+            const hasContent = isHtmlSourceMode ? (rawEditor && rawEditor.value.trim().length > 0) : (editor.innerText.trim().length > 0);
+            if (hasContent) {
                 if (confirm('Apakah Anda yakin ingin mengosongkan editor?')) {
                     editor.innerHTML = '';
+                    if (rawEditor) rawEditor.value = '';
                     saveActiveLanguageState();
                     updateStats();
                     showToast('Editor telah dikosongkan', 'fa-trash-can');
