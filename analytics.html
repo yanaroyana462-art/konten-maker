@@ -132,12 +132,14 @@
                     <label for="trendCategoryFilter" class="text-xs text-slate-500 dark:text-slate-400">Kategori:</label>
                     <select id="trendCategoryFilter" onchange="onTrendCategoryChange(this.value)" class="text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer">
                         <option value="all">Semua Kategori</option>
-                        <option value="khutbah">🕌 Khutbah / Tausiyah</option>
-                        <option value="artikel">📰 Artikel / Blog Post</option>
-                        <option value="sosmed">📲 Media Sosial</option>
-                        <option value="script">🎙️ Script Video / Podcast</option>
-                        <option value="newsletter">✉️ Newsletter</option>
-                        <option value="buletin">📄 Buletin / Press Release</option>
+                        <option value="politik">🏛️ Politik</option>
+                        <option value="ekonomi">📈 Ekonomi</option>
+                        <option value="sejarah">📜 Sejarah</option>
+                        <option value="fiqih">⚖️ Fiqih</option>
+                        <option value="pemikiran">💡 Pemikiran</option>
+                        <option value="pemerintahan">🏢 Pemerintahan</option>
+                        <option value="pidana">🛡️ Pidana</option>
+                        <option value="akhlak">🌸 Akhlak</option>
                     </select>
                 </div>
             </div>
@@ -246,6 +248,14 @@ const CAT = {
     script:     { label: 'Script Video / Podcast', emoji: '🎙️', color: '#f59e0b' },
     newsletter: { label: 'Newsletter',            emoji: '✉️', color: '#8b5cf6' },
     buletin:    { label: 'Buletin / Press Release', emoji: '📄', color: '#64748b' }
+    politik:      { label: 'Politik',            emoji: '🏛️', color: '#0284c7' },
+    ekonomi:      { label: 'Ekonomi',            emoji: '📈', color: '#10b981' },
+    sejarah:      { label: 'Sejarah',            emoji: '📜', color: '#f59e0b' },
+    fiqih:        { label: 'Fiqih',              emoji: '⚖️', color: '#8b5cf6' },
+    pemikiran:    { label: 'Pemikiran',          emoji: '💡', color: '#ec4899' },
+    pemerintahan: { label: 'Pemerintahan',       emoji: '🏢', color: '#06b6d4' },
+    pidana:       { label: 'Pidana',             emoji: '🛡️', color: '#ef4444' },
+    akhlak:       { label: 'Akhlak',             emoji: '🌸', color: '#14b8a6' }
 };
 const catInfo = c => CAT[c] || { label: c || 'Lainnya', emoji: '📁', color: '#94a3b8' };
 const TONE_LABEL = { santai: 'Santai', formal: 'Formal', profesional: 'Profesional', persuasif: 'Persuasif', inspiratif: 'Inspiratif', akademis: 'Akademis' };

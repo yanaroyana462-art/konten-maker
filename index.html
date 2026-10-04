@@ -261,7 +261,7 @@
                     <div id="t-statArticles" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Artikel</div>
                 </div>
                 <div class="text-center p-2 border-x border-slate-100 dark:border-slate-800">
-                    <div class="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">6</div>
+                    <div class="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">8</div>
                     <div id="t-statCategories" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Kategori</div>
                 </div>
                 <div class="text-center p-2">
@@ -298,29 +298,37 @@
                     <span class="flex items-center gap-2.5"><i class="fa-solid fa-border-all text-xs w-4 text-center"></i> <span id="t-cat-all">Semua Konten</span></span>
                     <span id="count-all" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('khutbah')" data-cat="khutbah" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>🕌</span> <span id="t-cat-khutbah">Khutbah / Tausiyah</span></span>
-                    <span id="count-khutbah" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('politik')" data-cat="politik" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>🏛️</span> <span id="t-cat-politik">Politik</span></span>
+                    <span id="count-politik" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('artikel')" data-cat="artikel" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>📰</span> <span id="t-cat-artikel">Artikel / Blog Post</span></span>
-                    <span id="count-artikel" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('ekonomi')" data-cat="ekonomi" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>📈</span> <span id="t-cat-ekonomi">Ekonomi</span></span>
+                    <span id="count-ekonomi" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('sosmed')" data-cat="sosmed" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>📲</span> <span id="t-cat-sosmed">Post Media Sosial</span></span>
-                    <span id="count-sosmed" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('sejarah')" data-cat="sejarah" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>📜</span> <span id="t-cat-sejarah">Sejarah</span></span>
+                    <span id="count-sejarah" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('script')" data-cat="script" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>🎙️</span> <span id="t-cat-script">Script Video / Podcast</span></span>
-                    <span id="count-script" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('fiqih')" data-cat="fiqih" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>⚖️</span> <span id="t-cat-fiqih">Fiqih</span></span>
+                    <span id="count-fiqih" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('newsletter')" data-cat="newsletter" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>✉️</span> <span id="t-cat-newsletter">Newsletter Email</span></span>
-                    <span id="count-newsletter" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('pemikiran')" data-cat="pemikiran" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>💡</span> <span id="t-cat-pemikiran">Pemikiran</span></span>
+                    <span id="count-pemikiran" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
-                <button onclick="setCategoryFilter('buletin')" data-cat="buletin" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
-                    <span class="flex items-center gap-2.5"><span>📄</span> <span id="t-cat-buletin">Buletin / Press Release</span></span>
-                    <span id="count-buletin" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                <button onclick="setCategoryFilter('pemerintahan')" data-cat="pemerintahan" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>🏢</span> <span id="t-cat-pemerintahan">Pemerintahan</span></span>
+                    <span id="count-pemerintahan" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                </button>
+                <button onclick="setCategoryFilter('pidana')" data-cat="pidana" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>🛡️</span> <span id="t-cat-pidana">Pidana</span></span>
+                    <span id="count-pidana" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
+                </button>
+                <button onclick="setCategoryFilter('akhlak')" data-cat="akhlak" class="sidebar-cat-btn cat-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs sm:text-sm font-medium text-left">
+                    <span class="flex items-center gap-2.5"><span>🌸</span> <span id="t-cat-akhlak">Akhlak</span></span>
+                    <span id="count-akhlak" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400">0</span>
                 </button>
             </nav>
 
@@ -737,19 +745,14 @@
                 statReaders: 'Pembaca',
                 sidebarHeading: 'Kategori Konten',
                 catAll: 'Semua Konten',
-                catKhutbah: 'Khutbah / Tausiyah',
-                catArtikel: 'Artikel / Blog Post',
-                catSosmed: 'Post Media Sosial',
-                catScript: 'Script Video / Podcast',
-                catNewsletter: 'Newsletter Email',
-                catBuletin: 'Buletin / Press Release',
-                tabAll: 'Semua',
-                tabKhutbah: 'Khutbah',
-                tabArtikel: 'Artikel',
-                tabSosmed: 'Media Sosial',
-                tabScript: 'Script Video',
-                tabNewsletter: 'Newsletter',
-                tabBuletin: 'Buletin',
+                catPolitik: 'Politik',
+                catEkonomi: 'Ekonomi',
+                catSejarah: 'Sejarah',
+                catFiqih: 'Fiqih',
+                catPemikiran: 'Pemikiran',
+                catPemerintahan: 'Pemerintahan',
+                catPidana: 'Pidana',
+                catAkhlak: 'Akhlak',
                 btnBack: 'Kembali ke Daftar',
                 btnBackBottom: 'Kembali ke Katalog Konten',
                 btnListen: 'Dengarkan',
@@ -806,19 +809,14 @@
                 statReaders: 'Readers',
                 sidebarHeading: 'Content Categories',
                 catAll: 'All Content',
-                catKhutbah: 'Sermon / Tausiyah',
-                catArtikel: 'Article / Blog Post',
-                catSosmed: 'Social Media Post',
-                catScript: 'Video / Podcast Script',
-                catNewsletter: 'Email Newsletter',
-                catBuletin: 'Bulletin / Press Release',
-                tabAll: 'All',
-                tabKhutbah: 'Sermon',
-                tabArtikel: 'Article',
-                tabSosmed: 'Social Media',
-                tabScript: 'Video Script',
-                tabNewsletter: 'Newsletter',
-                tabBuletin: 'Bulletin',
+                catPolitik: 'Politics',
+                catEkonomi: 'Economy',
+                catSejarah: 'History',
+                catFiqih: 'Fiqh',
+                catPemikiran: 'Thought',
+                catPemerintahan: 'Governance',
+                catPidana: 'Criminal Law',
+                catAkhlak: 'Ethics & Morals',
                 btnBack: 'Back to List',
                 btnBackBottom: 'Back to Content Catalog',
                 btnListen: 'Listen',
@@ -875,19 +873,14 @@
                 statReaders: 'قارئ',
                 sidebarHeading: 'تصنيفات المحتوى',
                 catAll: 'كافة المحتويات',
-                catKhutbah: 'خطبة / موعظة',
-                catArtikel: 'مقال / تدوينة',
-                catSosmed: 'منشورات التواصل',
-                catScript: 'سيناريو فيديو / بودكاست',
-                catNewsletter: 'نشرة بريدية',
-                catBuletin: 'نشرة إخبارية',
-                tabAll: 'الكل',
-                tabKhutbah: 'خطب',
-                tabArtikel: 'مقالات',
-                tabSosmed: 'تواصل',
-                tabScript: 'سيناريو',
-                tabNewsletter: 'نشرة',
-                tabBuletin: 'أخبار',
+                catPolitik: 'السياسة',
+                catEkonomi: 'الاقتصاد',
+                catSejarah: 'التاريخ',
+                catFiqih: 'الفقه',
+                catPemikiran: 'الفكر',
+                catPemerintahan: 'الحكم والإدارة',
+                catPidana: 'الجنائي',
+                catAkhlak: 'الأخلاق',
                 btnBack: 'العودة للقائمة',
                 btnBackBottom: 'الرجوع إلى دليل المحتوى',
                 btnListen: 'استمع',
@@ -1094,19 +1087,14 @@
             safeSetText('t-statReaders', t.statReaders);
             safeSetText('t-sidebarHeading', t.sidebarHeading);
             safeSetText('t-cat-all', t.catAll);
-            safeSetText('t-cat-khutbah', t.catKhutbah);
-            safeSetText('t-cat-artikel', t.catArtikel);
-            safeSetText('t-cat-sosmed', t.catSosmed);
-            safeSetText('t-cat-script', t.catScript);
-            safeSetText('t-cat-newsletter', t.catNewsletter);
-            safeSetText('t-cat-buletin', t.catBuletin);
-            safeSetText('t-tab-all', t.tabAll);
-            safeSetText('t-tab-khutbah', t.tabKhutbah);
-            safeSetText('t-tab-artikel', t.tabArtikel);
-            safeSetText('t-tab-sosmed', t.tabSosmed);
-            safeSetText('t-tab-script', t.tabScript);
-            safeSetText('t-tab-newsletter', t.tabNewsletter);
-            safeSetText('t-tab-buletin', t.tabBuletin);
+            safeSetText('t-cat-politik', t.catPolitik);
+            safeSetText('t-cat-ekonomi', t.catEkonomi);
+            safeSetText('t-cat-sejarah', t.catSejarah);
+            safeSetText('t-cat-fiqih', t.catFiqih);
+            safeSetText('t-cat-pemikiran', t.catPemikiran);
+            safeSetText('t-cat-pemerintahan', t.catPemerintahan);
+            safeSetText('t-cat-pidana', t.catPidana);
+            safeSetText('t-cat-akhlak', t.catAkhlak);
             safeSetText('t-btnBack', t.btnBack);
             safeSetText('t-btnBackBottom', t.btnBackBottom);
             safeSetText('t-btnListen', isSpeaking ? t.btnStopListen : t.btnListen);
@@ -1585,12 +1573,14 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
         // --- Category Label Localization Helper ---
         function getCategoryLabel(category, lang) {
             const catMap = {
-                khutbah: { id: '🕌 Khutbah / Tausiyah', en: '🕌 Sermon / Tausiyah', ar: '🕌 خطبة / موعظة' },
-                artikel: { id: '📰 Artikel / Blog Post', en: '📰 Article / Blog Post', ar: '📰 مقال / تدوينة' },
-                sosmed: { id: '📲 Media Sosial', en: '📲 Social Media', ar: '📲 منشورات التواصل' },
-                script: { id: '🎙️ Script Video', en: '🎙️ Video Script', ar: '🎙️ سيناريو فيديو' },
-                newsletter: { id: '✉️ Newsletter', en: '✉️ Newsletter', ar: '✉️ نشرة بريدية' },
-                buletin: { id: '📄 Buletin', en: '📄 Bulletin', ar: '📄 نشرة إخبارية' }
+                politik: { id: '🏛️ Politik', en: '🏛️ Politics', ar: '🏛️ السياسة' },
+                ekonomi: { id: '📈 Ekonomi', en: '📈 Economy', ar: '📈 الاقتصاد' },
+                sejarah: { id: '📜 Sejarah', en: '📜 History', ar: '📜 التاريخ' },
+                fiqih: { id: '⚖️ Fiqih', en: '⚖️ Fiqh', ar: '⚖️ الفقه' },
+                pemikiran: { id: '💡 Pemikiran', en: '💡 Thought', ar: '💡 الفكر' },
+                pemerintahan: { id: '🏢 Pemerintahan', en: '🏢 Governance', ar: '🏢 الحكم والإدارة' },
+                pidana: { id: '🛡️ Pidana', en: '🛡️ Criminal Law', ar: '🛡️ الجنائي' },
+                akhlak: { id: '🌸 Akhlak', en: '🌸 Ethics & Morals', ar: '🌸 الأخلاق' }
             };
             return catMap[category]?.[lang] || catMap[category]?.id || category;
         }
@@ -2088,7 +2078,7 @@ ${art.content}`;
 
         // --- Category Badges Counter ---
         function updateCategoryBadges() {
-            const cats = ['all', 'khutbah', 'artikel', 'sosmed', 'script', 'newsletter', 'buletin'];
+            const cats = ['all', 'politik', 'ekonomi', 'sejarah', 'fiqih', 'pemikiran', 'pemerintahan', 'pidana', 'akhlak'];
             cats.forEach(c => {
                 const badge = document.getElementById(`count-${c}`);
                 if (badge) {
