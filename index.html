@@ -449,8 +449,14 @@
             <!-- Article Body -->
             <div id="modalBody" class="space-y-4 text-slate-700 dark:text-slate-200 leading-relaxed text-base sm:text-lg"></div>
 
+            <!-- Previous & Next Article Navigation -->
+            <div id="articleNavContainer" class="no-print pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+            <!-- Related Articles (3 Articles) -->
+            <div id="relatedArticlesContainer" class="no-print pt-6 border-t border-slate-200 dark:border-slate-800"></div>
+
             <!-- Bottom Navigation -->
-            <div class="no-print pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+            <div class="no-print pt-4 flex justify-between items-center">
                 <button onclick="closeModal()" class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-sky-600 hover:bg-sky-700 text-white transition">
                     <i class="fa-solid fa-arrow-left"></i>
                     <span id="t-btnBackBottom">Kembali ke Katalog Konten</span>
@@ -784,7 +790,10 @@
                 userVisitsLabel: 'Total Kunjungan',
                 userVisitsSub: 'tayangan',
                 labelTone: 'Tone',
-                labelSegment: 'Segmen'
+                labelSegment: 'Segmen',
+                navPrev: 'Artikel Sebelumnya',
+                navNext: 'Artikel Selanjutnya',
+                relatedTitle: 'Artikel Terkait'
             },
             en: {
                 headerSubtitle: 'Creative Content Library & Publication',
@@ -850,7 +859,10 @@
                 userVisitsLabel: 'Total Visits',
                 userVisitsSub: 'views',
                 labelTone: 'Tone',
-                labelSegment: 'Audience'
+                labelSegment: 'Audience',
+                navPrev: 'Previous Article',
+                navNext: 'Next Article',
+                relatedTitle: 'Related Articles'
             },
             ar: {
                 headerSubtitle: 'مكتبة المحتوى الإبداعي والنشر الرقمي',
@@ -916,7 +928,10 @@
                 userVisitsLabel: 'إجمالي الزيارات',
                 userVisitsSub: 'مشاهدة',
                 labelTone: 'الأسلوب',
-                labelSegment: 'الجمهور'
+                labelSegment: 'الجمهور',
+                navPrev: 'المقال السابق',
+                navNext: 'المقال التالي',
+                relatedTitle: 'مقالات ذات صلة'
             }
         };
         let currentLang = localStorage.getItem('portal_language') || 'id';
@@ -1734,6 +1749,8 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
             updateModalBookmarkBtn();
             updateTTSButton();
             populateTTSVoices();
+            renderArticleNav(art.id);
+            renderRelatedArticles(art);
 
             // Tampilkan detail artikel di dalam halaman, sembunyikan daftar artikel
             const listView = document.getElementById('articlesListView');
@@ -1768,6 +1785,124 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
                 url.searchParams.delete('article');
                 window.history.replaceState({}, '', url.pathname + url.search);
             }
+        }
+
+        // --- Previous & Next Article Navigation Renderer ---
+        function renderArticleNav(id) {
+            const navContainer = document.getElementById('articleNavContainer');
+            if (!navContainer) return;
+
+            const currentIndex = articles.findIndex(a => String(a.id) === String(id));
+            if (currentIndex === -1) {
+                navContainer.innerHTML = '';
+                return;
+            }
+
+            const prevArt = currentIndex > 0 ? articles[currentIndex - 1] : null;
+            const nextArt = currentIndex < articles.length - 1 ? articles[currentIndex + 1] : null;
+            const t = translations[currentLang] || translations.id;
+            const isRTL = currentLang === 'ar';
+
+            const getTitle = (art) => {
+                if (!art) return '';
+                return (currentLang === 'en' && art.title_en) ? art.title_en : (currentLang === 'ar' && art.title_ar) ? art.title_ar : art.title;
+            };
+
+            let html = '';
+
+            if (prevArt) {
+                html += `
+                    <button type="button" onclick="openModal('${prevArt.id}')" class="flex flex-col text-left ${isRTL ? 'text-right' : ''} p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-sky-50/30 dark:hover:bg-sky-950/20 transition group">
+                        <span class="text-[11px] font-semibold text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 flex items-center gap-1.5 mb-1">
+                            <i class="fa-solid ${isRTL ? 'fa-arrow-right' : 'fa-arrow-left'} text-[10px]"></i>
+                            <span>${t.navPrev || 'Artikel Sebelumnya'}</span>
+                        </span>
+                        <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 line-clamp-1">
+                            ${getTitle(prevArt)}
+                        </span>
+                    </button>
+                `;
+            } else {
+                html += `<div></div>`;
+            }
+
+            if (nextArt) {
+                html += `
+                    <button type="button" onclick="openModal('${nextArt.id}')" class="flex flex-col text-right ${isRTL ? 'text-left' : ''} p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-sky-50/30 dark:hover:bg-sky-950/20 transition group sm:col-start-2">
+                        <span class="text-[11px] font-semibold text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 flex items-center justify-end ${isRTL ? 'justify-start' : ''} gap-1.5 mb-1">
+                            <span>${t.navNext || 'Artikel Selanjutnya'}</span>
+                            <i class="fa-solid ${isRTL ? 'fa-arrow-left' : 'fa-arrow-right'} text-[10px]"></i>
+                        </span>
+                        <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 line-clamp-1">
+                            ${getTitle(nextArt)}
+                        </span>
+                    </button>
+                `;
+            }
+
+            navContainer.innerHTML = html;
+        }
+
+        // --- Related Articles Renderer (Top 3 by Category) ---
+        function renderRelatedArticles(art) {
+            const container = document.getElementById('relatedArticlesContainer');
+            if (!container) return;
+
+            // Ambil maksimal 3 artikel berkategori sama (selain artikel yang sedang dibuka)
+            const related = articles
+                .filter(a => String(a.id) !== String(art.id) && a.category === art.category)
+                .slice(0, 3);
+
+            if (related.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            const t = translations[currentLang] || translations.id;
+            const isRTL = currentLang === 'ar';
+
+            const getTitle = (item) => {
+                return (currentLang === 'en' && item.title_en) ? item.title_en : (currentLang === 'ar' && item.title_ar) ? item.title_ar : item.title;
+            };
+            const getSnippet = (item) => {
+                return (currentLang === 'en' && item.snippet_en) ? item.snippet_en : (currentLang === 'ar' && item.snippet_ar) ? item.snippet_ar : item.snippet;
+            };
+
+            let cardsHtml = related.map(item => `
+                <div onclick="openModal('${item.id}')" class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 hover:border-sky-500 dark:hover:border-sky-500 hover:bg-sky-50/30 dark:hover:bg-sky-950/20 cursor-pointer transition flex flex-col justify-between group">
+                    <div class="space-y-2">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 inline-block">
+                            ${getCategoryLabel(item.category, currentLang)}
+                        </span>
+                        <h4 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 line-clamp-2 leading-snug">
+                            ${getTitle(item)}
+                        </h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            ${getSnippet(item)}
+                        </p>
+                    </div>
+                    <div class="pt-2 mt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                        <span><i class="fa-regular fa-clock mr-1"></i>${item.readTime} ${t.readMin}</span>
+                        <span class="text-sky-600 dark:text-sky-400 font-semibold group-hover:underline flex items-center gap-1">
+                            ${t.btnRead} <i class="fa-solid ${isRTL ? 'fa-arrow-left' : 'fa-arrow-right'} text-[9px]"></i>
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        <i class="fa-solid fa-layer-group text-sky-500"></i>
+                        <span>${t.relatedTitle || 'Artikel Terkait'}</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        ${cardsHtml}
+                    </div>
+                </div>
+            `;
         }
 
         // --- Auto On-The-Fly Article Translator ---
