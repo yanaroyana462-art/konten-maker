@@ -860,7 +860,6 @@ ATURAN:
         // --- Multilingual Manual Input Functions ---
         function saveActiveLanguageState() {
             const titleVal = document.getElementById('docTitle').value.trim();
-            const contentVal = editor.innerHTML.trim();
             const rawEditor = document.getElementById('rawHtmlEditor');
             const contentVal = (isHtmlSourceMode && rawEditor) ? rawEditor.value.trim() : editor.innerHTML.trim();
             multilingualData[currentLangTab] = {
