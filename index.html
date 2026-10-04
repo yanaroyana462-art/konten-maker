@@ -782,6 +782,12 @@
         <span id="toastMsg">Pesan notifikasi</span>
     </div>
 
+    <!-- Floating WhatsApp Admin Button -->
+    <a id="floatingWaBtn" href="https://wa.me/6285794506290?text=Halo%20Admin%20Content%20Maker,%20saya%20ingin%20bertanya%20terkait%20portal%20konten." target="_blank" rel="noopener noreferrer" onclick="contactAdminWhatsApp(event)" class="fixed bottom-6 left-4 sm:left-6 z-40 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-xl shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200 group" title="Kirim Pesan ke Admin via WhatsApp">
+        <i class="fa-brands fa-whatsapp text-2xl sm:text-xl"></i>
+        <span class="hidden sm:inline text-xs font-semibold tracking-wide">Chat Admin</span>
+    </a>
+
     <!-- Floating Scroll To Top Button -->
     <button id="btnBackToTop" onclick="scrollToTop()" class="fixed bottom-6 right-6 p-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white shadow-2xl transition-all duration-300 z-40 opacity-0 pointer-events-none translate-y-4" title="Kembali ke atas">
         <i class="fa-solid fa-arrow-up text-sm"></i>
@@ -1423,6 +1429,16 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
             window.open(waUrl, '_blank');
             closeDonationModal();
             showToast('Membuka WhatsApp untuk konfirmasi...', 'fa-brands fa-whatsapp');
+        }
+
+        function contactAdminWhatsApp(event) {
+            const userLead = JSON.parse(localStorage.getItem('portal_user_lead') || '{}');
+            const sender = userLead.name ? ` dari ${userLead.name}` : '';
+            const msg = `Halo Admin Content Maker, saya${sender} ingin bertanya atau berdiskusi terkait portal artikel.`;
+            const btn = document.getElementById('floatingWaBtn');
+            if (btn) {
+                btn.href = `https://wa.me/6285794506290?text=${encodeURIComponent(msg)}`;
+            }
         }
 
         // --- Reference Books Data & Real-Time Sync Handlers ---
