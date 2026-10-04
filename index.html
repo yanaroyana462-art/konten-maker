@@ -1485,6 +1485,9 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
 
         // --- Search Handler ---
         function handleSearch(val) {
+            if (activeModalArticle) {
+                closeModal();
+            }
             searchQuery = val.toLowerCase().trim();
             visibleCount = PAGE_SIZE;
             // Keep desktop and mobile search inputs synced
@@ -1495,6 +1498,9 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
 
         // --- Category Tab Filter ---
         function setCategoryFilter(cat) {
+            if (activeModalArticle) {
+                closeModal();
+            }
             currentCategory = cat;
             visibleCount = PAGE_SIZE;
             
@@ -1523,6 +1529,9 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
 
         // --- Bookmark Toggle Filter ---
         function toggleBookmarkFilter() {
+            if (activeModalArticle) {
+                closeModal();
+            }
             onlyBookmarks = !onlyBookmarks;
             visibleCount = PAGE_SIZE;
             const btn = document.getElementById('btnBookmarkFilter');
