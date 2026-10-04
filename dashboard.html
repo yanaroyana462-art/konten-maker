@@ -1419,7 +1419,6 @@ ATURAN:
 
         // --- Clear Editor ---
         function clearEditor() {
-            if (editor.innerText.trim().length > 0) {
             const rawEditor = document.getElementById('rawHtmlEditor');
             const hasContent = isHtmlSourceMode ? (rawEditor && rawEditor.value.trim().length > 0) : (editor.innerText.trim().length > 0);
             if (hasContent) {
