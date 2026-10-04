@@ -194,6 +194,10 @@
                 <option value="en">🇬🇧 EN</option>
                 <option value="ar">🇸🇦 العربية</option>
             </select>
+            <button onclick="openBooksModal()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition" title="Daftar Buku & Dokumen Referensi">
+                <i class="fa-solid fa-book-bookmark"></i>
+                <span id="t-btnBooks" class="hidden sm:inline">Buku Referensi</span>
+            </button>
             <button onclick="openRequestModal()" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-sm transition" title="Ajukan Permintaan Artikel Baru">
                 <i class="fa-solid fa-paper-plane"></i>
                 <span class="hidden sm:inline">Request Artikel</span>
@@ -527,6 +531,43 @@
         </div>
     </div>
 
+    <!-- Modal Buku Referensi Pop-up -->
+    <div id="booksModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl space-y-4 relative animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shadow-md shadow-indigo-500/20">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">Buku & Dokumen Referensi</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Daftar pustaka & rujukan materi pembuatan konten</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="loadReferenceBooks()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Segarkan Data Buku">
+                        <i class="fa-solid fa-rotate text-sm"></i>
+                    </button>
+                    <button type="button" onclick="closeBooksModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative shrink-0">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                <input type="text" id="booksSearchInput" oninput="renderReferenceBooks(this.value)" placeholder="Cari nama buku atau kata kunci kutipan..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition text-slate-900 dark:text-white">
+            </div>
+
+            <div id="booksListContainer" class="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-[220px]"></div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
+                <span id="booksCountText">Memuat dokumen...</span>
+                <button type="button" onclick="closeBooksModal()" class="px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Login PIN Admin -->
     <div id="adminLoginModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl space-y-5 relative animate-in fade-in zoom-in duration-200">
@@ -768,6 +809,7 @@
                 catPemerintahan: 'Pemerintahan',
                 catPidana: 'Pidana',
                 catAkhlak: 'Akhlak',
+                btnBooks: 'Buku Referensi',
                 btnBack: 'Kembali ke Daftar',
                 btnBackBottom: 'Kembali ke Katalog Konten',
                 btnListen: 'Dengarkan',
@@ -832,6 +874,7 @@
                 catPemerintahan: 'Governance',
                 catPidana: 'Criminal Law',
                 catAkhlak: 'Ethics & Morals',
+                btnBooks: 'References',
                 btnBack: 'Back to List',
                 btnBackBottom: 'Back to Content Catalog',
                 btnListen: 'Listen',
@@ -896,6 +939,7 @@
                 catPemerintahan: 'الحكم والإدارة',
                 catPidana: 'الجنائي',
                 catAkhlak: 'الأخلاق',
+                btnBooks: 'المراجع',
                 btnBack: 'العودة للقائمة',
                 btnBackBottom: 'الرجوع إلى دليل المحتوى',
                 btnListen: 'استمع',
@@ -971,6 +1015,7 @@
         let currentFontSizeIndex = 1;
         let selectedDonationNominal = 50000;
         const DANA_PHONE = '085794506290';
+        let referenceBooks = [];
 
         // --- Session ID & Analytics Tracking Helpers ---
         function getSessionId() {
@@ -1049,6 +1094,12 @@
             await updateVisitStats();
             updateStats();
             updateBookmarkBadge();
+            await loadReferenceBooks();
+            setupBooksRealtime();
+
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'creator_books') loadReferenceBooks();
+            });
 
             // Buka artikel otomatis jika tautan sebar dibuka oleh penerima
             const urlParams = new URLSearchParams(window.location.search);
@@ -1110,6 +1161,7 @@
             safeSetText('t-cat-pemerintahan', t.catPemerintahan);
             safeSetText('t-cat-pidana', t.catPidana);
             safeSetText('t-cat-akhlak', t.catAkhlak);
+            safeSetText('t-btnBooks', t.btnBooks);
             safeSetText('t-btnBack', t.btnBack);
             safeSetText('t-btnBackBottom', t.btnBackBottom);
             safeSetText('t-btnListen', isSpeaking ? t.btnStopListen : t.btnListen);
@@ -1371,6 +1423,103 @@ Semoga berkah dan bermanfaat untuk pengembangan konten kebaikan. Terima kasih!`;
             window.open(waUrl, '_blank');
             closeDonationModal();
             showToast('Membuka WhatsApp untuk konfirmasi...', 'fa-brands fa-whatsapp');
+        }
+
+        // --- Reference Books Data & Real-Time Sync Handlers ---
+        async function loadReferenceBooks() {
+            let docs = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('documents')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    if (!error && data) {
+                        docs = data.map(doc => ({
+                            id: doc.id,
+                            name: doc.file_name,
+                            size: doc.file_size > 1024 * 1024 
+                                ? (doc.file_size / (1024 * 1024)).toFixed(1) + ' MB' 
+                                : Math.round((doc.file_size || 0) / 1024) + ' KB',
+                            date: doc.created_at ? new Date(doc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja',
+                            extractedText: doc.content_text || ''
+                        }));
+                    }
+                } catch (err) {
+                    console.warn('Gagal memuat dokumen referensi dari Supabase:', err);
+                }
+            }
+            if (docs.length === 0) {
+                docs = JSON.parse(localStorage.getItem('creator_books') || '[]');
+            }
+            referenceBooks = docs;
+            const searchInput = document.getElementById('booksSearchInput');
+            renderReferenceBooks(searchInput ? searchInput.value : '');
+        }
+
+        function renderReferenceBooks(filter = '') {
+            const container = document.getElementById('booksListContainer');
+            const countText = document.getElementById('booksCountText');
+            if (!container) return;
+            const q = filter.trim().toLowerCase();
+            const filtered = referenceBooks.filter(b => 
+                !q || (b.name && b.name.toLowerCase().includes(q)) || (b.extractedText && b.extractedText.toLowerCase().includes(q))
+            );
+            if (countText) countText.innerText = `${filtered.length} dari ${referenceBooks.length} buku rujukan`;
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 space-y-2">
+                        <i class="fa-solid fa-book-open text-3xl text-slate-300 dark:text-slate-700"></i>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Tidak ada buku rujukan yang ditemukan.</p>
+                    </div>
+                `;
+                return;
+            }
+            container.innerHTML = filtered.map(b => {
+                const snippet = b.extractedText ? b.extractedText.replace(/\s+/g, ' ').slice(0, 160) + '...' : 'Cuplikan rujukan belum tersedia.';
+                return `
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-indigo-400 dark:hover:border-indigo-600 transition">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-xs">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate" title="${b.name}">${b.name}</h4>
+                                    <span class="text-[10px] text-slate-400 font-mono">${b.size || ''} &bull; ${b.date || ''}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded-md font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">Rujukan Aktif</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-300 italic leading-relaxed">
+                            <i class="fa-solid fa-quote-left text-[9px] text-indigo-400 mr-1"></i>${snippet}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openBooksModal() {
+            const modal = document.getElementById('booksModal');
+            if (modal) modal.classList.remove('hidden');
+            loadReferenceBooks();
+        }
+
+        function closeBooksModal() {
+            const modal = document.getElementById('booksModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setupBooksRealtime() {
+            if (!supabaseClient) return;
+            try {
+                supabaseClient.channel('portal-documents-sync')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+                        loadReferenceBooks();
+                    }).subscribe();
+            } catch (err) {
+                console.warn('Realtime channel error:', err);
+            }
         }
 
         // --- Admin Authentication & UI Handlers ---
