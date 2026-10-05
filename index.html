@@ -1480,7 +1480,26 @@
         function sendDonationWhatsAppConfirmation() {
             const senderInput = document.getElementById('donationSenderName');
             const senderName = (senderInput && senderInput.value.trim()) ? senderInput.value.trim() : 'Hamba Allah';
-            const nominalFormatted = new Intl.NumberFormat('id-ID').format(selectedDonationNominal || 50000);
+            const amount = selectedDonationNominal || 50000;
+            const nominalFormatted = new Intl.NumberFormat('id-ID').format(amount);
+
+            // Catat donasi ke database / API dengan status awal 'pending' (belum diverifikasi admin)
+            const donationPayload = {
+                sender_name: senderName,
+                amount: amount,
+                method: 'DANA (085794506290)',
+                status: 'pending'
+            };
+            fetch('/api/content?resource=donations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(donationPayload)
+            }).catch(err => console.warn('Gagal sync cloud:', err));
+
+            // Backup lokal
+            let localDonations = JSON.parse(localStorage.getItem('portal_donations') || '[]');
+            localDonations.unshift({ id: Date.now(), ...donationPayload, created_at: new Date().toISOString() });
+            localStorage.setItem('portal_donations', JSON.stringify(localDonations));
 
             const msg = `Halo Kang Yana Royana,
 

@@ -118,7 +118,48 @@ export default async function handler(req, res) {
             return res.status(201).json({ success: true });
         }
 
+        if (resource === 'donations' && req.method === 'POST') {
+            const body = parseBody(req);
+            const donation = {
+                sender_name: (body.sender_name || 'Hamba Allah').trim(),
+                amount: Number(body.amount) || 0,
+                method: body.method || 'DANA',
+                status: body.status || 'pending',
+                notes: body.notes || ''
+            };
+            try {
+                const saved = await supabaseRequest('donations', {
+                    method: 'POST',
+                    headers: { Prefer: 'return=representation' },
+                    body: JSON.stringify(donation)
+                });
+                return res.status(201).json(saved?.[0] || saved || { success: true });
+            } catch (err) {
+                return res.status(200).json({ success: true, localOnly: true });
+            }
+        }
+
         if (!verifyAdminRequest(req)) return sendError(res, 401, 'Sesi admin tidak valid atau telah berakhir.');
+
+        if (resource === 'donations' && req.method === 'GET') {
+            const donations = await supabaseRequest('donations?select=*&order=created_at.desc');
+            return res.status(200).json(donations);
+        }
+
+        if (resource === 'donations' && req.method === 'PATCH' && id) {
+            const body = parseBody(req);
+            const updated = await supabaseRequest(`donations?id=eq.${encodeURIComponent(id)}`, {
+                method: 'PATCH',
+                headers: { Prefer: 'return=representation' },
+                body: JSON.stringify(body)
+            });
+            return res.status(200).json(updated?.[0] || { success: true });
+        }
+
+        if (resource === 'donations' && req.method === 'DELETE' && id) {
+            await supabaseRequest(`donations?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+            return res.status(200).json({ success: true });
+        }
 
         if (resource === 'requests' && req.method === 'GET') {
             const requests = await supabaseRequest('article_requests?select=*&order=created_at.desc');

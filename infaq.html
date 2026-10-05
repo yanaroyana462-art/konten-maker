@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Infaq & Dukungan - Content Maker Studio</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💖</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
+                <i class="fa-solid fa-hand-holding-heart text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-900 dark:text-white leading-tight text-base sm:text-lg">Data <span class="text-rose-500 font-normal">Infaq & Dukungan</span></h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Admin &bull; Rekapitulasi Donasi & Verifikasi Transfer</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Ubah Tema">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+            <a href="dashboard.html" class="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Dashboard</span>
+            </a>
+            <button onclick="openManualModal()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow-sm transition">
+                <i class="fa-solid fa-plus"></i>
+                <span class="hidden sm:inline">Tambah Infaq</span>
+            </button>
+            <button onclick="exportCSV()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition">
+                <i class="fa-solid fa-file-csv"></i>
+                <span class="hidden sm:inline">Export CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+        
+        <!-- Summary Statistics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Total Dana Sudah Masuk -->
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Infaq Masuk (Sah)</span>
+                    <h3 id="statTotalConfirmedAmount" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">Rp 0</h3>
+                    <span id="statConfirmedCount" class="text-[11px] text-slate-500 font-medium">0 donasi terkonfirmasi</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-500 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <!-- Belum Terkonfirmasi (Nominal Diabaikan) -->
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Belum Masuk / Pending</span>
+                    <h3 id="statPendingAmount" class="text-2xl sm:text-3xl font-extrabold text-amber-500 dark:text-amber-400 mt-1">Rp 0</h3>
+                    <span class="text-[11px] text-slate-400 italic">(Tidak dihitung ke total masuk)</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+            <!-- Total Transaksi -->
+            <div class="bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pengajuan</span>
+                    <h3 id="statTotalTransactions" class="text-2xl sm:text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">0</h3>
+                    <span id="statSyncStatus" class="text-[11px] text-slate-500 font-medium">Sinkronisasi Cloud</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-500 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="relative w-full sm:max-w-md">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari donatur atau metode pembayaran..." class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-rose-500 outline-none transition">
+            </div>
+            <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                <select id="filterStatus" onchange="handleFilterStatus(this.value)" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer">
+                    <option value="all">Semua Status</option>
+                    <option value="confirmed">Sudah Masuk (Dikonfirmasi)</option>
+                    <option value="pending">Belum Masuk (Pending)</option>
+                </select>
+                <button onclick="fetchDonations()" class="px-3.5 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Segarkan</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Donations Table Card -->
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
+                            <th class="py-3.5 px-4 w-12 text-center">No</th>
+                            <th class="py-3.5 px-4">Nama Pengirim / Donatur</th>
+                            <th class="py-3.5 px-4">Sumber / Metode</th>
+                            <th class="py-3.5 px-4">Nominal</th>
+                            <th class="py-3.5 px-4">Waktu</th>
+                            <th class="py-3.5 px-4 text-center">Status Konfirmasi</th>
+                            <th class="py-3.5 px-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donationsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyDonationsState" class="hidden text-center py-12 space-y-2 p-6">
+                <i class="fa-solid fa-hand-holding-dollar text-4xl text-slate-300 dark:text-slate-700"></i>
+                <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm">Belum Ada Data Infaq</h4>
+                <p class="text-xs text-slate-400">Data donasi dari form portal pengunjung akan otomatis muncul di sini.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tambah Infaq Manual -->
+    <div id="manualModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Tambah Catatan Infaq Manual</h3>
+                <button onclick="closeManualModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleManualSubmit(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Nama Pengirim / Donatur</label>
+                    <input type="text" id="manualSender" placeholder="Contoh: Hamba Allah / Ahmad" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Nominal (Rp)</label>
+                    <input type="number" id="manualAmount" min="1000" step="1000" placeholder="Contoh: 50000" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Sumber / Metode</label>
+                    <input type="text" id="manualMethod" placeholder="Contoh: Transfer Bank / Tunai / DANA" value="DANA" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Status Pembayaran</label>
+                    <select id="manualStatus" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500 font-semibold cursor-pointer">
+                        <option value="confirmed">✅ Sudah Masuk (Hitung ke Total)</option>
+                        <option value="pending">⏳ Belum Masuk / Pending (Abaikan dari Total)</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeManualModal()" class="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold">Batal</button>
+                    <button type="submit" class="w-2/3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50 text-xs font-medium">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg"></span>
+    </div>
+
+    <script>
+        let allDonations = [];
+        let searchQuery = '';
+        let statusFilter = 'all';
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function showToast(msg, icon = 'fa-circle-check') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastIcon').className = `fa-solid ${icon} text-emerald-400 dark:text-emerald-600`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
+        }
+
+        // Proteksi Sesi Khusus Admin
+        async function checkAdminAuth() {
+            try {
+                const res = await fetch('/api/verify-admin');
+                const data = await res.json();
+                if (!data || !data.authenticated) {
+                    alert('Akses Ditolak: Halaman Data Infaq ini khusus untuk Admin.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                window.location.href = 'index.html';
+                return false;
+            }
+        }
+
+        window.onload = async function() {
+            const authorized = await checkAdminAuth();
+            if (authorized) {
+                await fetchDonations();
+            }
+        };
+
+        async function fetchDonations() {
+            let cloudDonations = [];
+            try {
+                const res = await fetch('/api/content?resource=donations');
+                if (res.ok) {
+                    cloudDonations = await res.json();
+                }
+            } catch (err) {
+                console.warn('Gagal memuat infaq dari server:', err);
+            }
+
+            // Gabung dengan cadangan lokal
+            const localDonations = JSON.parse(localStorage.getItem('portal_donations') || '[]');
+            const map = new Map();
+            [...cloudDonations, ...localDonations].forEach(item => {
+                if (item && item.id) map.set(String(item.id), item);
+            });
+            allDonations = Array.from(map.values());
+            renderDonations();
+            updateSummary();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase().trim();
+            renderDonations();
+        }
+
+        function handleFilterStatus(val) {
+            statusFilter = val;
+            renderDonations();
+        }
+
+        function updateSummary() {
+            // ATURAN: Hanya yang berstatus 'confirmed' yang dijumlahkan ke total
+            const confirmed = allDonations.filter(d => d.status === 'confirmed');
+            const pending = allDonations.filter(d => d.status === 'pending');
+
+            const totalConfirmedAmount = confirmed.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+            const totalPendingAmount = pending.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+
+            document.getElementById('statTotalConfirmedAmount').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalConfirmedAmount);
+            document.getElementById('statConfirmedCount').innerText = `${confirmed.length} donasi terkonfirmasi`;
+            document.getElementById('statPendingAmount').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(totalPendingAmount);
+            document.getElementById('statTotalTransactions').innerText = allDonations.length;
+        }
+
+        function renderDonations() {
+            const tbody = document.getElementById('donationsTableBody');
+            const empty = document.getElementById('emptyDonationsState');
+
+            const filtered = allDonations.filter(d => {
+                const matchSearch = !searchQuery || 
+                    (d.sender_name && d.sender_name.toLowerCase().includes(searchQuery)) ||
+                    (d.method && d.method.toLowerCase().includes(searchQuery));
+                const matchStatus = (statusFilter === 'all') || (d.status === statusFilter);
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            tbody.innerHTML = filtered.map((d, idx) => {
+                const isConfirmed = d.status === 'confirmed';
+                const formattedAmount = 'Rp ' + new Intl.NumberFormat('id-ID').format(d.amount || 0);
+                const dateStr = d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                }) : '-';
+
+                return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition">
+                    <td class="py-3 px-4 text-center font-mono text-slate-400 text-xs">${idx + 1}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">${d.sender_name || 'Hamba Allah'}</td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-mono text-xs">${d.method || 'DANA'}</td>
+                    <td class="py-3 px-4 font-mono font-bold ${isConfirmed ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 line-through'}">
+                        ${formattedAmount}
+                        ${!isConfirmed ? '<span class="block text-[10px] no-underline font-normal text-amber-500 font-sans italic">Abaikan (belum masuk)</span>' : ''}
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs font-mono">${dateStr}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="toggleDonationStatus('${d.id}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition ${isConfirmed ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-amber-100 hover:text-amber-700' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-emerald-100 hover:text-emerald-700'}" title="Klik untuk mengubah status konfirmasi">
+                            <i class="fa-solid ${isConfirmed ? 'fa-circle-check text-emerald-600' : 'fa-clock text-amber-600'}"></i>
+                            <span>${isConfirmed ? 'Sudah Masuk' : 'Belum Masuk'}</span>
+                        </button>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="deleteDonation('${d.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg transition" title="Hapus catatan">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function toggleDonationStatus(id) {
+            const item = allDonations.find(d => String(d.id) === String(id));
+            if (!item) return;
+            const newStatus = item.status === 'confirmed' ? 'pending' : 'confirmed';
+            item.status = newStatus;
+
+            try {
+                await fetch(`/api/content?resource=donations&id=${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+            } catch (err) {
+                console.warn(err);
+            }
+
+            localStorage.setItem('portal_donations', JSON.stringify(allDonations));
+            renderDonations();
+            updateSummary();
+            showToast(newStatus === 'confirmed' ? 'Dana dikonfirmasi masuk (dihitung ke total)!' : 'Status diubah ke Belum Masuk (diabaikan dari total)', 'fa-rotate');
+        }
+
+        async function deleteDonation(id) {
+            if (!confirm('Hapus catatan infaq ini?')) return;
+            allDonations = allDonations.filter(d => String(d.id) !== String(id));
+            try {
+                await fetch(`/api/content?resource=donations&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            } catch (err) {}
+            localStorage.setItem('portal_donations', JSON.stringify(allDonations));
+            renderDonations();
+            updateSummary();
+            showToast('Catatan donasi dihapus.', 'fa-trash-can');
+        }
+
+        function openManualModal() {
+            document.getElementById('manualModal').classList.remove('hidden');
+        }
+        function closeManualModal() {
+            document.getElementById('manualModal').classList.add('hidden');
+        }
+
+        async function handleManualSubmit(e) {
+            e.preventDefault();
+            const sender = document.getElementById('manualSender').value.trim();
+            const amount = Number(document.getElementById('manualAmount').value) || 0;
+            const method = document.getElementById('manualMethod').value.trim() || 'DANA';
+            const status = document.getElementById('manualStatus').value;
+
+            const newRecord = {
+                id: Date.now(),
+                sender_name: sender,
+                amount: amount,
+                method: method,
+                status: status,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                await fetch('/api/content?resource=donations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newRecord)
+                });
+            } catch (e) {}
+
+            allDonations.unshift(newRecord);
+            localStorage.setItem('portal_donations', JSON.stringify(allDonations));
+            closeManualModal();
+            renderDonations();
+            updateSummary();
+            showToast('Infaq manual berhasil ditambahkan!', 'fa-circle-check');
+        }
+
+        function exportCSV() {
+            if (allDonations.length === 0) {
+                alert('Belum ada data untuk diexport!');
+                return;
+            }
+            let csv = 'No,Nama Donatur,Metode,Nominal,Status,Waktu\n';
+            allDonations.forEach((d, i) => {
+                csv += `"${i + 1}","${d.sender_name.replace(/"/g, '""')}","${d.method}","${d.amount}","${d.status === 'confirmed' ? 'Sudah Masuk' : 'Belum Masuk'}","${d.created_at || '-'}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rekap-infaq-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
